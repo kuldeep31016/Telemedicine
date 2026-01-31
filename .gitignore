@@ -1,14 +1,45 @@
-# Environment variables
-.env
-node_modules/
-*.log
-.DS_Store
-.vscode/
-coverage/
-dist/
-build/
+# Dependencies
+**/node_modules/
+**/.pnp
+**/.pnp.js
 
-# Mobile app specific
-mobile/NabhaApp/.expo/
-mobile/NabhaApp/node_modules/
-mobile/NabhaApp/.env
+# Environment Variables
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+
+# Production Build
+**/build/
+**/dist/
+**/.next/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+
+# Testing
+**/coverage/
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Cache
+**/.cache/
+**/.eslintcache
+
+# Mobile (Expo)
+**/.expo/
+**/.expo-shared/
+**/ios/Pods/
+**/android/.gradle/
+**/android/app/build/
+
+# Firebase
+.firebase/
+firebase-debug.log
