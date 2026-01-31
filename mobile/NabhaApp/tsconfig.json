@@ -12,9 +12,9 @@
     "noEmit": true,
     "target": "esnext",
     "module": "commonjs",
-    "moduleResolution": "node16",
+    "moduleResolution": "node",
     "lib": ["dom", "esnext"],
-    "types": ["react-native", "jest"]
+    "types": ["react-native"]
   },
   "exclude": [
     "node_modules",
