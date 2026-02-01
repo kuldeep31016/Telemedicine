@@ -1,6 +1,6 @@
 const admin = require('../config/firebase');
 const { UnauthorizedError } = require('../utils/error.util');
-const User = require('../models/User');
+const authService = require('../services/auth.service');
 const logger = require('../config/logger');
 
 // Firebase Authentication Middleware
@@ -39,8 +39,8 @@ const authenticate = async (req, res, next) => {
       }
     }
 
-    // Get user from MongoDB using Firebase UID
-    const user = await User.findOne({ firebaseUid: decodedToken.uid, isActive: true });
+    // Get user using the cross-model finder in authService
+    const user = await authService.getUserByFirebaseUid(decodedToken.uid);
 
     if (!user) {
       throw new UnauthorizedError('User not found or inactive');
@@ -59,7 +59,7 @@ const authenticate = async (req, res, next) => {
       return next(new UnauthorizedError('Invalid token format'));
     }
     logger.error('Authentication error:', error);
-    next(new UnauthorizedError('Invalid or expired token'));
+    next(new UnauthorizedError(error.message || 'Invalid or expired token'));
   }
 };
 
@@ -71,7 +71,7 @@ const optionalAuth = async (req, res, next) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       const decodedToken = await admin.auth().verifyIdToken(token);
-      const user = await User.findOne({ firebaseUid: decodedToken.uid, isActive: true });
+      const user = await authService.findUserAcrossModels({ firebaseUid: decodedToken.uid, isActive: true });
 
       if (user) {
         req.user = user;
