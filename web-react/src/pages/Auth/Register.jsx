@@ -1,10 +1,24 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Paper,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  Checkbox,
+  FormControlLabel,
+  Link as MuiLink,
+  CircularProgress
+} from '@mui/material';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Phone, UserPlus } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -18,10 +32,15 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    username: '',
     phone: '',
     password: '',
     confirmPassword: '',
     role: initialRole,
+    specialization: '',
+    licenseNumber: '',
+    assignedArea: '',
+    dateOfBirth: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -40,9 +59,8 @@ const Register = () => {
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.username.trim()) newErrors.username = 'Username is required';
 
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -66,6 +84,20 @@ const Register = () => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    // Role specific validation
+    if (formData.role === 'doctor') {
+      if (!formData.specialization.trim()) newErrors.specialization = 'Specialization is required';
+      if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License Number is required';
+    }
+
+    if (formData.role === 'asha_worker') {
+      if (!formData.assignedArea.trim()) newErrors.assignedArea = 'Assigned Area is required';
+    }
+
+    if (formData.role === 'patient') {
+      if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -85,158 +117,265 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 py-12">
-      {/* Background decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute -bottom-32 left-1/2 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{ animationDelay: '4s' }}></div>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass rounded-3xl p-8 md:p-12 w-full max-w-2xl relative z-10"
-      >
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg"
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        py: 4
+      }}
+    >
+      <Container maxWidth="sm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Paper
+            elevation={6}
+            sx={{
+              p: 4,
+              borderRadius: 4,
+              backdropFilter: 'blur(10px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)'
+            }}
           >
-            <UserPlus className="w-10 h-10 text-white" />
-          </motion.div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Create Account
-          </h1>
-          <p className="text-gray-600">Join our telemedicine platform</p>
-        </div>
+            <Box textAlign="center" mb={4}>
+              <Typography variant="h4" component="h1" fontWeight="bold" color="primary" gutterBottom>
+                Create Account
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                Join our telemedicine platform
+              </Typography>
+            </Box>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <Input
-              label="Full Name"
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              error={errors.name}
-              placeholder="Enter your full name"
-              icon={<User className="w-5 h-5" />}
-              required
-            />
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Full Name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    error={!!errors.name}
+                    helperText={errors.name}
+                    variant="outlined"
+                  />
+                </Grid>
 
-            <Input
-              label="Email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              placeholder="Enter your email"
-              icon={<Mail className="w-5 h-5" />}
-              required
-            />
-          </div>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    variant="outlined"
+                  />
+                </Grid>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <Input
-              label="Phone"
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              error={errors.phone}
-              placeholder="10-digit mobile number"
-              icon={<Phone className="w-5 h-5" />}
-              required
-            />
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    error={!!errors.phone}
+                    helperText={errors.phone}
+                    variant="outlined"
+                  />
+                </Grid>
 
-            {!roleParam && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  I am a <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 glass rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
-                >
-                  <option value="patient">Patient</option>
-                  <option value="doctor">Doctor</option>
-                  <option value="asha_worker">ASHA Worker</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-            )}
-          </div>
+                <Grid item xs={12} sm={6}>
+                  {roleParam ? (
+                    <TextField
+                      fullWidth
+                      label="Username"
+                      name="username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      error={!!errors.username}
+                      helperText={errors.username}
+                      variant="outlined"
+                    />
+                  ) : (
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel>Role</InputLabel>
+                      <Select
+                        name="role"
+                        value={formData.role}
+                        onChange={handleChange}
+                        label="Role"
+                      >
+                        <MenuItem value="patient">Patient</MenuItem>
+                        <MenuItem value="doctor">Doctor</MenuItem>
+                        <MenuItem value="asha_worker">ASHA Worker</MenuItem>
+                        <MenuItem value="admin">Admin</MenuItem>
+                      </Select>
+                    </FormControl>
+                  )}
+                </Grid>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              placeholder="Create password"
-              icon={<Lock className="w-5 h-5" />}
-              required
-            />
+                {!roleParam && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Username"
+                      name="username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      error={!!errors.username}
+                      helperText={errors.username}
+                      variant="outlined"
+                    />
+                  </Grid>
+                )}
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              error={errors.confirmPassword}
-              placeholder="Confirm password"
-              icon={<Lock className="w-5 h-5" />}
-              required
-            />
-          </div>
+                {/* Conditional Fields based on Role */}
+                {formData.role === 'doctor' && (
+                  <>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Specialization"
+                        name="specialization"
+                        value={formData.specialization}
+                        onChange={handleChange}
+                        error={!!errors.specialization}
+                        helperText={errors.specialization}
+                        variant="outlined"
+                        placeholder="e.g. Cardiologist"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="License Number"
+                        name="licenseNumber"
+                        value={formData.licenseNumber}
+                        onChange={handleChange}
+                        error={!!errors.licenseNumber}
+                        helperText={errors.licenseNumber}
+                        variant="outlined"
+                      />
+                    </Grid>
+                  </>
+                )}
 
-          <div className="flex items-start gap-2">
-            <input type="checkbox" required className="mt-1 rounded" />
-            <p className="text-sm text-gray-600">
-              I agree to the{' '}
-              <Link to="/terms" className="text-blue-600 hover:text-blue-700 font-semibold">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link to="/privacy" className="text-blue-600 hover:text-blue-700 font-semibold">
-                Privacy Policy
-              </Link>
-            </p>
-          </div>
+                {formData.role === 'asha_worker' && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Assigned Area"
+                      name="assignedArea"
+                      value={formData.assignedArea}
+                      onChange={handleChange}
+                      error={!!errors.assignedArea}
+                      helperText={errors.assignedArea}
+                      variant="outlined"
+                      placeholder="e.g. Village Name, Ward No."
+                    />
+                  </Grid>
+                )}
 
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            loading={loading}
-          >
-            Create Account
-          </Button>
-        </form>
+                {formData.role === 'patient' && (
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Date of Birth"
+                      name="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={handleChange}
+                      error={!!errors.dateOfBirth}
+                      helperText={errors.dateOfBirth}
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                    />
+                  </Grid>
+                )}
 
-        {/* Login link */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </motion.div>
-    </div>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    error={!!errors.password}
+                    helperText={errors.password}
+                    variant="outlined"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Confirm Password"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    error={!!errors.confirmPassword}
+                    helperText={errors.confirmPassword}
+                    variant="outlined"
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={<Checkbox required color="primary" />}
+                    label={
+                      <Typography variant="body2" color="textSecondary">
+                        I agree to the{' '}
+                        <MuiLink component={Link} to="/terms" underline="hover">
+                          Terms of Service
+                        </MuiLink>{' '}
+                        and{' '}
+                        <MuiLink component={Link} to="/privacy" underline="hover">
+                          Privacy Policy
+                        </MuiLink>
+                      </Typography>
+                    }
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    disabled={loading}
+                    sx={{ py: 1.5, borderRadius: 2, textTransform: 'none', fontSize: '1.1rem' }}
+                  >
+                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
+                  </Button>
+                </Grid>
+              </Grid>
+            </form>
+
+            <Box mt={3} textAlign="center">
+              <Typography variant="body2" color="textSecondary">
+                Already have an account?{' '}
+                <MuiLink component={Link} to="/login" variant="subtitle2" underline="hover" fontWeight="bold">
+                  Sign in
+                </MuiLink>
+              </Typography>
+            </Box>
+          </Paper>
+        </motion.div>
+      </Container>
+    </Box>
   );
 };
 
