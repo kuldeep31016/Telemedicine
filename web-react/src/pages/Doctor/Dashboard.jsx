@@ -1,23 +1,48 @@
 import React from 'react';
-import { Calendar, Users, Video, FileText, Clock } from 'lucide-react';
+import {
+  Grid,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Avatar,
+  IconButton,
+  Button,
+  Chip,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Divider,
+  Paper
+} from '@mui/material';
+import {
+  DateRange,
+  People,
+  VideoCall,
+  Assignment,
+  ChevronRight,
+  MoreVert,
+  AccessTime,
+  CheckCircle,
+  PendingActions
+} from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import Card from '../../components/common/Card';
-import Badge from '../../components/common/Badge';
 
 const DoctorDashboard = () => {
   const menuItems = [
-    { path: '/doctor/dashboard', label: 'Dashboard', icon: <Calendar className="w-5 h-5" /> },
-    { path: '/doctor/appointments', label: 'Appointments', icon: <Calendar className="w-5 h-5" />, badge: '5' },
-    { path: '/doctor/patients', label: 'My Patients', icon: <Users className="w-5 h-5" /> },
-    { path: '/doctor/consultations', label: 'Consultations', icon: <Video className="w-5 h-5" /> },
-    { path: '/doctor/prescriptions', label: 'Prescriptions', icon: <FileText className="w-5 h-5" /> },
+    { path: '/doctor/dashboard', label: 'Dashboard', icon: <DateRange /> },
+    { path: '/doctor/appointments', label: 'Appointments', icon: <DateRange />, badge: '5' },
+    { path: '/doctor/patients', label: 'My Patients', icon: <People /> },
+    { path: '/doctor/consultations', label: 'Consultations', icon: <VideoCall /> },
+    { path: '/doctor/prescriptions', label: 'Prescriptions', icon: <Assignment /> },
   ];
 
   const stats = [
-    { label: 'Today\'s Appointments', value: '8', icon: <Calendar className="w-8 h-8" />, color: 'from-blue-500 to-cyan-500' },
-    { label: 'Total Patients', value: '234', icon: <Users className="w-8 h-8" />, color: 'from-purple-500 to-pink-500' },
-    { label: 'Consultations', value: '12', icon: <Video className="w-8 h-8" />, color: 'from-green-500 to-teal-500' },
-    { label: 'Prescriptions', value: '45', icon: <FileText className="w-8 h-8" />, color: 'from-orange-500 to-red-500' },
+    { label: "Today's Appointments", value: '8', icon: <DateRange />, color: '#1976d2' },
+    { label: 'Total Patients', value: '234', icon: <People />, color: '#9c27b0' },
+    { label: 'Consultations', value: '12', icon: <VideoCall />, color: '#2e7d32' },
+    { label: 'Prescriptions', value: '45', icon: <Assignment />, color: '#ed6c02' },
   ];
 
   const upcomingAppointments = [
@@ -34,103 +59,173 @@ const DoctorDashboard = () => {
 
   return (
     <DashboardLayout menuItems={menuItems}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Doctor Dashboard
-          </h1>
-          <p className="text-gray-600 mt-2">Manage your appointments and consultations</p>
-        </div>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight="bold" sx={{ color: '#1a237e' }}>
+          Doctor Dashboard
+        </Typography>
+        <Typography variant="body1" color="textSecondary">
+          Manage your appointments and consultations
+        </Typography>
+      </Box>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:scale-105 transition-transform duration-300">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
-                  <h3 className="text-3xl font-bold mt-2">{stat.value}</h3>
-                </div>
-                <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-xl text-white`}>
+      {/* Stats Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card
+              sx={{
+                height: '100%',
+                borderRadius: 4,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                transition: 'transform 0.3s',
+                '&:hover': { transform: 'translateY(-5px)' }
+              }}
+            >
+              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: stat.color + '20',
+                    color: stat.color,
+                    width: 56,
+                    height: 56,
+                    borderRadius: 3
+                  }}
+                >
                   {stat.icon}
-                </div>
-              </div>
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle2" color="textSecondary" fontWeight="medium">
+                    {stat.label}
+                  </Typography>
+                  <Typography variant="h5" fontWeight="bold">
+                    {stat.value}
+                  </Typography>
+                </Box>
+              </CardContent>
             </Card>
-          ))}
-        </div>
+          </Grid>
+        ))}
+      </Grid>
 
-        {/* Content Grid */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Upcoming Appointments */}
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Today's Appointments</h2>
-              <Badge variant="info">{upcomingAppointments.length} Scheduled</Badge>
-            </div>
-            <div className="space-y-3">
-              {upcomingAppointments.map((appointment) => (
-                <div key={appointment.id} className="p-4 glass rounded-lg hover:bg-white/50 transition-all">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                        {appointment.patient.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{appointment.patient}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Clock className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm text-gray-600">{appointment.time}</span>
-                        </div>
-                        <Badge variant="info" className="mt-2">{appointment.type}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <button className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all">
-                      Start Call
-                    </button>
-                    <button className="px-4 py-2 glass rounded-lg font-semibold hover:bg-white/50 transition-all">
-                      Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+      <Grid container spacing={3}>
+        {/* Upcoming Appointments */}
+        <Grid item xs={12} lg={7}>
+          <Paper sx={{ p: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" fontWeight="bold">
+                Today's Appointments
+              </Typography>
+              <Chip
+                label={`${upcomingAppointments.length} Scheduled`}
+                color="primary"
+                size="small"
+                sx={{ fontWeight: 'bold' }}
+              />
+            </Box>
 
-          {/* Recent Patients */}
-          <Card>
-            <h2 className="text-xl font-bold mb-4">Recent Patients</h2>
-            <div className="space-y-3">
-              {recentPatients.map((patient) => (
-                <div key={patient.id} className="p-3 glass rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold">
-                        {patient.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{patient.name}</p>
-                        <p className="text-sm text-gray-600">{patient.condition}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant={patient.status === 'treated' ? 'success' : 'warning'}>
-                        {patient.status}
-                      </Badge>
-                      <p className="text-xs text-gray-500 mt-1">{patient.lastVisit}</p>
-                    </div>
-                  </div>
-                  <button className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-semibold">
-                    View Records →
-                  </button>
-                </div>
+            <List disablePadding>
+              {upcomingAppointments.map((appt, idx) => (
+                <React.Fragment key={appt.id}>
+                  <ListItem
+                    alignItems="flex-start"
+                    sx={{
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      p: 2,
+                      borderRadius: 2,
+                      mb: 1,
+                      bgcolor: 'rgba(25, 118, 210, 0.04)',
+                      '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.08)' }
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ background: 'linear-gradient(45deg, #2196F3, #21CBF3)' }}>
+                        {appt.patient.charAt(0)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={<Typography fontWeight="bold">{appt.patient}</Typography>}
+                      secondary={
+                        <Box sx={{ mt: 0.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                            <AccessTime sx={{ fontSize: 16 }} />
+                            <Typography variant="body2">{appt.time}</Typography>
+                          </Box>
+                          <Chip
+                            label={appt.type}
+                            size="small"
+                            variant="outlined"
+                            color="info"
+                            sx={{ mt: 1, height: 20, fontSize: '0.7rem' }}
+                          />
+                        </Box>
+                      }
+                    />
+                    <Box sx={{ mt: { xs: 2, sm: 0 }, display: 'flex', gap: 1 }}>
+                      <Button variant="contained" size="small" disableElevation sx={{ borderRadius: 2 }}>
+                        Start Call
+                      </Button>
+                      <Button variant="outlined" size="small" sx={{ borderRadius: 2 }}>
+                        Details
+                      </Button>
+                    </Box>
+                  </ListItem>
+                  {idx < upcomingAppointments.length - 1 && <Divider component="li" sx={{ my: 1, opacity: 0 }} />}
+                </React.Fragment>
               ))}
-            </div>
-          </Card>
-        </div>
-      </div>
+            </List>
+          </Paper>
+        </Grid>
+
+        {/* Recent Patients */}
+        <Grid item xs={12} lg={5}>
+          <Paper sx={{ p: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+              Recent Patients
+            </Typography>
+            <List disablePadding>
+              {recentPatients.map((patient, idx) => (
+                <ListItem
+                  key={patient.id}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    mb: 1,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    '&:hover': { borderColor: 'primary.light' }
+                  }}
+                  secondaryAction={
+                    <IconButton edge="end">
+                      <ChevronRight />
+                    </IconButton>
+                  }
+                >
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: 'secondary.light' }}>{patient.name.charAt(0)}</Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={<Typography fontWeight="bold">{patient.name}</Typography>}
+                    secondary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <Typography variant="caption" color="textSecondary">{patient.condition}</Typography>
+                        <Chip
+                          label={patient.status}
+                          size="small"
+                          color={patient.status === 'treated' ? 'success' : 'warning'}
+                          sx={{ height: 16, fontSize: '0.6rem' }}
+                        />
+                      </Box>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+            <Button fullWidth color="primary" sx={{ mt: 2, fontWeight: 'bold' }}>
+              View All Records
+            </Button>
+          </Paper>
+        </Grid>
+      </Grid>
     </DashboardLayout>
   );
 };

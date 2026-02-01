@@ -1,24 +1,48 @@
 import React from 'react';
-import { Calendar, FileText, Video, Activity, Heart, Pill } from 'lucide-react';
+import {
+  Grid,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Avatar,
+  Button,
+  Chip,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Divider,
+  Paper,
+  Stack,
+  LinearProgress
+} from '@mui/material';
+import {
+  CalendarToday,
+  Description,
+  VideoCall,
+  MedicalServices,
+  Favorite,
+  Speed,
+  Thermostat,
+  Add
+} from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import Card from '../../components/common/Card';
-import Badge from '../../components/common/Badge';
-import Button from '../../components/common/Button';
 
 const PatientDashboard = () => {
   const menuItems = [
-    { path: '/patient/dashboard', label: 'Dashboard', icon: <Activity className="w-5 h-5" /> },
-    { path: '/patient/appointments', label: 'My Appointments', icon: <Calendar className="w-5 h-5" /> },
-    { path: '/patient/doctors', label: 'Find Doctors', icon: <Video className="w-5 h-5" /> },
-    { path: '/patient/records', label: 'Health Records', icon: <FileText className="w-5 h-5" /> },
-    { path: '/patient/prescriptions', label: 'Prescriptions', icon: <Pill className="w-5 h-5" /> },
+    { path: '/patient/dashboard', label: 'Dashboard', icon: <Speed /> },
+    { path: '/patient/appointments', label: 'My Appointments', icon: <CalendarToday /> },
+    { path: '/patient/doctors', label: 'Find Doctors', icon: <VideoCall /> },
+    { path: '/patient/records', label: 'Health Records', icon: <Description /> },
+    { path: '/patient/prescriptions', label: 'Prescriptions', icon: <MedicalServices /> },
   ];
 
   const stats = [
-    { label: 'Upcoming Appointments', value: '3', icon: <Calendar className="w-8 h-8" />, color: 'from-blue-500 to-cyan-500' },
-    { label: 'Health Records', value: '12', icon: <FileText className="w-8 h-8" />, color: 'from-purple-500 to-pink-500' },
-    { label: 'Consultations', value: '8', icon: <Video className="w-8 h-8" />, color: 'from-green-500 to-teal-500' },
-    { label: 'Prescriptions', value: '5', icon: <Pill className="w-8 h-8" />, color: 'from-orange-500 to-red-500' },
+    { label: 'Upcoming Appointments', value: '3', icon: <CalendarToday />, color: '#1E88E5' },
+    { label: 'Health Records', value: '12', icon: <Description />, color: '#8E24AA' },
+    { label: 'Consultations', value: '8', icon: <VideoCall />, color: '#43A047' },
+    { label: 'Prescriptions', value: '5', icon: <MedicalServices />, color: '#FB8C00' },
   ];
 
   const upcomingAppointments = [
@@ -32,146 +56,172 @@ const PatientDashboard = () => {
   ];
 
   const healthMetrics = [
-    { label: 'Blood Pressure', value: '120/80', unit: 'mmHg', status: 'normal', icon: <Heart className="w-5 h-5" /> },
-    { label: 'Heart Rate', value: '72', unit: 'bpm', status: 'normal', icon: <Activity className="w-5 h-5" /> },
-    { label: 'Temperature', value: '98.6', unit: '°F', status: 'normal', icon: <Activity className="w-5 h-5" /> },
+    { label: 'Blood Pressure', value: '120/80', unit: 'mmHg', status: 'Normal', icon: <Favorite />, color: '#e91e63' },
+    { label: 'Heart Rate', value: '72', unit: 'bpm', status: 'Normal', icon: <Speed />, color: '#2196f3' },
+    { label: 'Temperature', value: '98.6', unit: '°F', status: 'Normal', icon: <Thermostat />, color: '#ff9800' },
   ];
 
   return (
     <DashboardLayout menuItems={menuItems}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Patient Dashboard
-            </h1>
-            <p className="text-gray-600 mt-2">Manage your health and appointments</p>
-          </div>
-          <Button variant="primary" icon={<Video className="w-5 h-5" />}>
-            Book Appointment
-          </Button>
-        </div>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold" sx={{ color: '#1a237e' }}>
+            Patient Dashboard
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Welcome back! Here's an overview of your health.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          sx={{ borderRadius: 3, px: 3, py: 1.2, textTransform: 'none', fontWeight: 'bold' }}
+        >
+          Book Appointment
+        </Button>
+      </Box>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:scale-105 transition-transform duration-300">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
-                  <h3 className="text-3xl font-bold mt-2">{stat.value}</h3>
-                </div>
-                <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-xl text-white`}>
+      {/* Stats Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={3} key={index}>
+            <Card sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+              <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="caption" color="textSecondary" fontWeight="bold" sx={{ textTransform: 'uppercase' }}>
+                    {stat.label}
+                  </Typography>
+                  <Typography variant="h4" fontWeight="bold">
+                    {stat.value}
+                  </Typography>
+                </Box>
+                <Avatar sx={{ bgcolor: stat.color + '15', color: stat.color, width: 50, height: 50 }}>
                   {stat.icon}
-                </div>
-              </div>
+                </Avatar>
+              </CardContent>
             </Card>
-          ))}
-        </div>
+          </Grid>
+        ))}
+      </Grid>
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Upcoming Appointments */}
-          <div className="lg:col-span-2">
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Upcoming Appointments</h2>
-                <Badge variant="info">{upcomingAppointments.length} Scheduled</Badge>
-              </div>
-              <div className="space-y-3">
-                {upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="p-4 glass rounded-lg">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                          {appointment.doctor.split(' ')[1].charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-semibold">{appointment.doctor}</p>
-                          <p className="text-sm text-gray-600">{appointment.specialty}</p>
-                          <div className="flex gap-2 mt-2">
-                            <Badge variant="info">{appointment.type}</Badge>
-                            <Badge variant="success">{appointment.date}</Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-sm font-semibold text-blue-600">{appointment.time}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="primary" className="flex-1">
-                        Join Call
-                      </Button>
-                      <Button variant="outline">
-                        Reschedule
-                      </Button>
-                    </div>
-                  </div>
+      <Grid container spacing={4}>
+        <Grid item xs={12} lg={8}>
+          <Stack spacing={4}>
+            {/* Upcoming Appointments */}
+            <Paper sx={{ p: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                Upcoming Appointments
+              </Typography>
+              <List disablePadding>
+                {upcomingAppointments.map((appt, idx) => (
+                  <ListItem
+                    key={appt.id}
+                    sx={{
+                      borderRadius: 3,
+                      mb: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      p: 2,
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'flex-start', sm: 'center' }
+                    }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar sx={{ width: 50, height: 50, bgcolor: 'primary.light' }}>
+                        {appt.doctor.split(' ')[1].charAt(0)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={<Typography fontWeight="bold">{appt.doctor}</Typography>}
+                      secondary={appt.specialty}
+                      sx={{ flexGrow: 1 }}
+                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, my: { xs: 2, sm: 0 }, minWidth: { sm: 200 } }}>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight="bold">{appt.date}</Typography>
+                        <Typography variant="caption" color="textSecondary">{appt.time}</Typography>
+                      </Box>
+                      <Chip label={appt.type} size="small" variant="soft" color="primary" />
+                    </Box>
+                    <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                      <Button variant="contained" size="small" disableElevation sx={{ borderRadius: 2 }}>Join</Button>
+                      <Button variant="outlined" size="small" sx={{ borderRadius: 2 }}>Edit</Button>
+                    </Stack>
+                  </ListItem>
                 ))}
-              </div>
-            </Card>
+              </List>
+            </Paper>
 
             {/* Recent Prescriptions */}
-            <Card className="mt-6">
-              <h2 className="text-xl font-bold mb-4">Recent Prescriptions</h2>
-              <div className="space-y-3">
-                {recentPrescriptions.map((prescription) => (
-                  <div key={prescription.id} className="p-3 glass rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold">{prescription.medicine}</p>
-                        <p className="text-sm text-gray-600">Prescribed by {prescription.doctor}</p>
-                        <p className="text-xs text-gray-500 mt-1">Duration: {prescription.duration}</p>
-                      </div>
-                      <Badge variant="success">{prescription.date}</Badge>
-                    </div>
-                  </div>
+            <Paper sx={{ p: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                Recent Prescriptions
+              </Typography>
+              <Grid container spacing={2}>
+                {recentPrescriptions.map((px) => (
+                  <Grid item xs={12} sm={6} key={px.id}>
+                    <Card variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
+                      <Typography variant="subtitle1" fontWeight="bold">{px.medicine}</Typography>
+                      <Typography variant="body2" color="textSecondary">Dr. {px.doctor}</Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, alignItems: 'center' }}>
+                        <Typography variant="caption" sx={{ bgcolor: 'success.light', color: 'success.dark', px: 1, py: 0.5, borderRadius: 1 }}>
+                          {px.date}
+                        </Typography>
+                        <Typography variant="caption" color="textSecondary">Duration: {px.duration}</Typography>
+                      </Box>
+                    </Card>
+                  </Grid>
                 ))}
-              </div>
-            </Card>
-          </div>
+              </Grid>
+            </Paper>
+          </Stack>
+        </Grid>
 
-          {/* Health Metrics */}
-          <div>
-            <Card>
-              <h2 className="text-xl font-bold mb-4">Health Metrics</h2>
-              <div className="space-y-4">
-                {healthMetrics.map((metric, index) => (
-                  <div key={index} className="p-4 glass rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                        {metric.icon}
-                      </div>
-                      <p className="font-semibold text-sm">{metric.label}</p>
-                    </div>
-                    <div className="flex items-end gap-2">
-                      <p className="text-2xl font-bold">{metric.value}</p>
-                      <p className="text-sm text-gray-600 mb-1">{metric.unit}</p>
-                    </div>
-                    <Badge variant="success" className="mt-2">Normal</Badge>
-                  </div>
+        <Grid item xs={12} lg={4}>
+          <Stack spacing={4}>
+            {/* Health Metrics */}
+            <Paper sx={{ p: 3, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+                Health Metrics
+              </Typography>
+              <Stack spacing={3}>
+                {healthMetrics.map((metric, idx) => (
+                  <Box key={idx}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar sx={{ width: 32, height: 32, bgcolor: metric.color + '15', color: metric.color }}>
+                          {React.cloneElement(metric.icon, { sx: { fontSize: 18 } })}
+                        </Avatar>
+                        <Typography variant="subtitle2" fontWeight="bold">{metric.label}</Typography>
+                      </Box>
+                      <Chip label={metric.status} size="small" color="success" sx={{ height: 20, fontSize: '0.65rem' }} />
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                      <Typography variant="h5" fontWeight="bold">{metric.value}</Typography>
+                      <Typography variant="caption" color="textSecondary">{metric.unit}</Typography>
+                    </Box>
+                  </Box>
                 ))}
-              </div>
-            </Card>
+              </Stack>
+            </Paper>
 
-            {/* Quick Actions */}
-            <Card className="mt-6">
-              <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
-              <div className="space-y-2">
-                <Button variant="primary" className="w-full">
-                  Book Appointment
+            {/* Quick Tips */}
+            <Card sx={{ borderRadius: 4, bgcolor: 'primary.dark', color: 'white' }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Health Tip of the Day
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>
+                  Drink at least 8 glasses of water today to stay hydrated and maintain your energy levels.
+                </Typography>
+                <Button variant="contained" color="secondary" size="small" sx={{ borderRadius: 2, textTransform: 'none' }}>
+                  Read More
                 </Button>
-                <Button variant="secondary" className="w-full">
-                  View Records
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Contact Support
-                </Button>
-              </div>
+              </CardContent>
             </Card>
-          </div>
-        </div>
-      </div>
+          </Stack>
+        </Grid>
+      </Grid>
     </DashboardLayout>
   );
 };
