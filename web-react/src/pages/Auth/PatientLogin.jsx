@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Link as MuiLink,
+  CircularProgress,
+  IconButton,
+  InputAdornment
+} from '@mui/material';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User } from 'lucide-react';
+import { Person, Mail, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import useAuthStore from '../../store/authStore';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
 
 const PatientLogin = () => {
   const navigate = useNavigate();
@@ -16,6 +26,7 @@ const PatientLogin = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,31 +41,24 @@ const PatientLogin = () => {
 
   const validate = () => {
     const newErrors = {};
-
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validate()) return;
 
     try {
       const user = await login(formData.email, formData.password);
-
       if (user.role === 'patient') {
         navigate('/patient/dashboard');
       } else {
@@ -67,81 +71,134 @@ const PatientLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-green-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float"></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass rounded-3xl p-8 md:p-12 w-full max-w-md relative z-10"
-      >
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg"
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%)',
+        p: 2
+      }}
+    >
+      <Container maxWidth="xs">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Paper
+            elevation={10}
+            sx={{
+              p: 4,
+              borderRadius: 4,
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)'
+            }}
           >
-            <User className="w-10 h-10 text-white" />
-          </motion.div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
-            Patient Portal
-          </h1>
-          <p className="text-gray-600">Sign in to access healthcare services</p>
-        </div>
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                bgcolor: 'success.dark',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 2,
+                boxShadow: 3
+              }}
+            >
+              <Person sx={{ fontSize: 40, color: 'white' }} />
+            </Box>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            label="Email"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            error={errors.email}
-            placeholder="your@email.com"
-            icon={<Mail className="w-5 h-5" />}
-            required
-          />
+            <Typography variant="h4" fontWeight="bold" gutterBottom color="success.dark">
+              Patient Portal
+            </Typography>
+            <Typography variant="body2" color="textSecondary" mb={4}>
+              Sign in to access healthcare services
+            </Typography>
 
-          <Input
-            label="Password"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            error={errors.password}
-            placeholder="Enter your password"
-            icon={<Lock className="w-5 h-5" />}
-            required
-          />
+            <form onSubmit={handleSubmit}>
+              <Box mb={2}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                  color="success"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Mail color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
 
-          <Button
-            type="submit"
-            variant="success"
-            className="w-full"
-            loading={loading}
-          >
-            Sign In
-          </Button>
-        </form>
+              <Box mb={3}>
+                <TextField
+                  fullWidth
+                  label="Password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={handleChange}
+                  error={!!errors.password}
+                  helperText={errors.password}
+                  color="success"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Lock color="action" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
 
-        <div className="mt-8 text-center space-y-3">
-          <Link to="/" className="block text-gray-600 hover:text-gray-700">
-            ← Back to Home
-          </Link>
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/register?role=patient" className="text-green-600 hover:text-green-700 font-semibold">
-              Register Now
-            </Link>
-          </p>
-        </div>
-      </motion.div>
-    </div>
+              <Button
+                fullWidth
+                variant="contained"
+                size="large"
+                type="submit"
+                color="success"
+                disabled={loading}
+                sx={{ py: 1.5, borderRadius: 2, textTransform: 'none', fontSize: '1rem', color: 'white' }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              </Button>
+            </form>
+
+            <Box mt={4} display="flex" flexDirection="column" gap={1}>
+              <MuiLink component={Link} to="/" variant="body2" color="textSecondary" underline="hover">
+                ← Back to Home
+              </MuiLink>
+              <Typography variant="body2" color="textSecondary">
+                Don't have an account?{' '}
+                <MuiLink component={Link} to="/register?role=patient" fontWeight="bold" color="success.dark" underline="hover">
+                  Register Now
+                </MuiLink>
+              </Typography>
+            </Box>
+          </Paper>
+        </motion.div>
+      </Container>
+    </Box>
   );
 };
 
