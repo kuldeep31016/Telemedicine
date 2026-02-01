@@ -1,167 +1,267 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import {
-  Menu,
-  X,
-  LogOut,
-  Bell,
-  User,
-  Activity,
-  Stethoscope,
-  UserCog,
-} from 'lucide-react';
+  Box,
+  Drawer,
+  AppBar,
+  Toolbar,
+  List,
+  Typography,
+  Divider,
+  IconButton,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+  Chip,
+  Badge as MuiBadge,
+  useTheme,
+  useMediaQuery,
+  Button
+} from '@mui/material';
+import {
+  Menu as MenuIcon,
+  ChevronLeft,
+  Notifications as Bell,
+  Logout as LogOut,
+  LocalHospital,
+  Dashboard,
+  People,
+  VideoCall,
+  Assignment
+} from '@mui/icons-material';
 import useAuthStore from '../../store/authStore';
-import Badge from '../common/Badge';
+
+const drawerWidth = 280;
 
 const DashboardLayout = ({ children, menuItems = [] }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [open, setOpen] = useState(!isMobile);
+
+  const handleDrawerToggle = () => {
+    setOpen(!open);
+  };
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/');
   };
 
-  const getRoleBadge = (role) => {
-    const badges = {
-      admin: 'danger',
-      doctor: 'info',
+  const getRoleColor = (role) => {
+    const colors = {
+      admin: 'error',
+      doctor: 'primary',
       patient: 'success',
-      asha_worker: 'purple',
+      asha_worker: 'secondary',
     };
-    return badges[role] || 'info';
+    return colors[role] || 'info';
   };
+
+  const drawerContent = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Avatar
+          sx={{
+            bgcolor: 'primary.main',
+            width: 40,
+            height: 40,
+            background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)'
+          }}
+        >
+          <LocalHospital />
+        </Avatar>
+        <Box>
+          <Typography variant="h6" fontWeight="bold" sx={{ lineHeight: 1 }}>
+            Nabha
+          </Typography>
+          <Typography variant="caption" color="textSecondary">
+            Telemedicine
+          </Typography>
+        </Box>
+      </Box>
+
+      <Divider sx={{ mb: 2 }} />
+
+      <Box sx={{ px: 2, mb: 3 }}>
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            bgcolor: 'action.hover',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 40,
+              height: 40,
+              background: 'linear-gradient(135deg, #2196f3 0%, #f50057 100%)'
+            }}
+          >
+            {user?.name?.charAt(0).toUpperCase()}
+          </Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle2" fontWeight="bold" noWrap>
+              {user?.name}
+            </Typography>
+            <Chip
+              label={user?.role?.replace('_', ' ')}
+              size="small"
+              color={getRoleColor(user?.role)}
+              sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase' }}
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      <List sx={{ px: 2, flex: 1 }}>
+        {menuItems.map((item, index) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <ListItem key={index} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to={item.path}
+                selected={isActive}
+                sx={{
+                  borderRadius: 2,
+                  '&.Mui-selected': {
+                    background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                    color: 'white',
+                    '& .MuiListItemIcon-root': { color: 'white' },
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #1565c0 0%, #7b1fa2 100%)',
+                    }
+                  }
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{ fontWeight: isActive ? 'bold' : 'medium' }}
+                />
+                {item.badge && (
+                  <Chip
+                    label={item.badge}
+                    size="small"
+                    color="error"
+                    sx={{ height: 20, minWidth: 20 }}
+                  />
+                )}
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+
+      <Box sx={{ p: 2 }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          startIcon={<LogOut />}
+          onClick={handleLogout}
+          sx={{ borderRadius: 2, textTransform: 'none' }}
+        >
+          Logout
+        </Button>
+      </Box>
+    </Box>
+  );
 
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <motion.aside
-        initial={{ x: -300 }}
-        animate={{ x: sidebarOpen ? 0 : -300 }}
-        transition={{ duration: 0.3 }}
-        className={`
-          fixed lg:relative z-30 h-screen w-64 glass border-r border-white/20
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f7fe' }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { lg: `calc(100% - ${open ? drawerWidth : 0}px)` },
+          ml: { lg: `${open ? drawerWidth : 0}px)` },
+          bgcolor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(10px)',
+          color: 'text.primary',
+          boxShadow: 'none',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
+        }}
       >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 border-b border-white/20">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Nabha
-                </h1>
-                <p className="text-xs text-gray-600">Telemedicine</p>
-              </div>
-            </div>
-          </div>
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            onClick={handleDrawerToggle}
+            edge="start"
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
 
-          {/* User Profile */}
-          <div className="p-4 border-b border-white/20">
-            <div className="flex items-center gap-3 p-3 glass rounded-lg">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm truncate">{user?.name}</p>
-                <Badge variant={getRoleBadge(user?.role)}>
-                  {user?.role?.replace('_', ' ')}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-            {menuItems.map((item, index) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={index}
-                  to={item.path}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300
-                    ${isActive
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                      : 'hover:bg-white/20 text-gray-700'
-                    }
-                  `}
-                >
-                  {item.icon}
-                  <span className="font-medium">{item.label}</span>
-                  {item.badge && (
-                    <Badge variant="danger" className="ml-auto">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-white/20">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all duration-300"
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <IconButton color="inherit">
+              <MuiBadge variant="dot" color="error">
+                <Bell />
+              </MuiBadge>
+            </IconButton>
+            <Avatar
+              sx={{
+                width: 35,
+                height: 35,
+                background: 'linear-gradient(135deg, #2196f3 0%, #f50057 100%)',
+                cursor: 'pointer'
+              }}
             >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
-        </div>
-      </motion.aside>
+              {user?.name?.charAt(0).toUpperCase()}
+            </Avatar>
+          </Box>
+        </Toolbar>
+      </AppBar>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Top Header */}
-        <header className="glass border-b border-white/20 sticky top-0 z-20">
-          <div className="flex items-center justify-between px-6 py-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+      <Box
+        component="nav"
+        sx={{ width: { lg: open ? drawerWidth : 0 }, flexShrink: { lg: 0 } }}
+      >
+        <Drawer
+          variant={isMobile ? 'temporary' : 'persistent'}
+          open={open}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              border: 'none',
+              boxShadow: '4px 0 10px rgba(0,0,0,0.05)',
+            },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      </Box>
 
-            <div className="flex items-center gap-4 ml-auto">
-              {/* Notifications */}
-              <button className="relative p-2 hover:bg-white/20 rounded-lg transition-colors">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-
-              {/* User Menu */}
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-
-      {/* Sidebar Overlay for Mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-    </div>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { lg: `calc(100% - ${open ? drawerWidth : 0}px)` },
+          mt: 8
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
   );
 };
 
