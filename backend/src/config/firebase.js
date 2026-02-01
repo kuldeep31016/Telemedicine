@@ -1,9 +1,7 @@
 const admin = require('firebase-admin');
 const config = require('./env');
 const logger = require('./logger');
-
-// Initialize Firebase Admin
-// Initialize Firebase Admin
+    
 try {
   if (config.firebase.projectId && config.firebase.clientEmail && config.firebase.privateKey) {
     admin.initializeApp({
