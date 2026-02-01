@@ -9,12 +9,12 @@ import Button from '../../components/common/Button';
 const AdminLogin = () => {
   const navigate = useNavigate();
   const { login, loading } = useAuthStore();
-  
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  
+
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -30,31 +30,31 @@ const AdminLogin = () => {
 
   const validate = () => {
     const newErrors = {};
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validate()) return;
 
     try {
       const user = await login(formData.email, formData.password);
-      
+
       if (user.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
@@ -133,6 +133,12 @@ const AdminLogin = () => {
           <Link to="/" className="block text-gray-600 hover:text-gray-700">
             ← Back to Home
           </Link>
+          <p className="text-gray-600">
+            Not registered yet?{' '}
+            <Link to="/register?role=admin" className="text-green-600 hover:text-green-700 font-semibold">
+              Register as Admin
+            </Link>
+          </p>
         </div>
       </motion.div>
     </div>
