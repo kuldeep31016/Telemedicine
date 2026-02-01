@@ -7,11 +7,11 @@ dotenv.config();
 // Environment validation schema
 const envSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
-  PORT: Joi.number().default(5000),
+  PORT: Joi.number().default(5001),
   MONGODB_URI: Joi.string().required(),
-  FIREBASE_PROJECT_ID: Joi.string().required(),
-  FIREBASE_CLIENT_EMAIL: Joi.string().required(),
-  FIREBASE_PRIVATE_KEY: Joi.string().required(),
+  FIREBASE_PROJECT_ID: Joi.string().optional().allow(''),
+  FIREBASE_CLIENT_EMAIL: Joi.string().optional().allow(''),
+  FIREBASE_PRIVATE_KEY: Joi.string().optional().allow(''),
   ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000'),
   LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'debug').default('info'),
   LOG_FILE: Joi.string().default('logs/app.log'),
@@ -36,7 +36,7 @@ module.exports = {
   firebase: {
     projectId: envVars.FIREBASE_PROJECT_ID,
     clientEmail: envVars.FIREBASE_CLIENT_EMAIL,
-    privateKey: envVars.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    privateKey: (envVars.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
   },
   cors: {
     allowedOrigins: envVars.ALLOWED_ORIGINS.split(',')
