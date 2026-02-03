@@ -136,7 +136,7 @@ const ProfileSetupScreen = ({ navigation, route }) => {
               onChangeText={(value) => handleInputChange('address', value)}
               placeholder="ਆਪਣਾ ਪਤਾ ਲਿਖੋ / Enter your address"
               placeholderTextColor="#999"
-              multiline
+              multiline={true}
               numberOfLines={3}
             />
           </View>
