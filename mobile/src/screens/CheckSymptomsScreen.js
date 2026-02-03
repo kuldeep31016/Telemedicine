@@ -380,7 +380,7 @@ const CheckSymptomsScreen = ({ visible, onClose, language = 'en' }) => {
                 placeholder="Enter any known conditions, allergies, or medications..."
                 value={medicalHistory}
                 onChangeText={setMedicalHistory}
-                multiline
+                multiline={true}
                 numberOfLines={3}
               />
             </View>
