@@ -84,7 +84,7 @@ const PatientRegistration = ({ navigation }) => {
             value={formData.address}
             onChangeText={(text) => setFormData({...formData, address: text})}
             placeholder="Enter complete address"
-            multiline
+            multiline={true}
             numberOfLines={3}
           />
 
@@ -103,7 +103,7 @@ const PatientRegistration = ({ navigation }) => {
             value={formData.medicalHistory}
             onChangeText={(text) => setFormData({...formData, medicalHistory: text})}
             placeholder="Any existing conditions, allergies, medications..."
-            multiline
+            multiline={true}
             numberOfLines={4}
           />
 
