@@ -192,7 +192,7 @@ const SymptomsForm = ({ language = 'en', symptomsData = {}, onSubmit }) => {
             placeholder={t.symptomsPlaceholder}
             value={symptoms}
             onChangeText={setSymptoms}
-            multiline
+            multiline={true}
             numberOfLines={6}
             textAlignVertical="top"
           />
@@ -288,7 +288,7 @@ const SymptomsForm = ({ language = 'en', symptomsData = {}, onSubmit }) => {
             placeholder={t.medicationsPlaceholder}
             value={medications}
             onChangeText={setMedications}
-            multiline
+            multiline={true}
             numberOfLines={3}
           />
         </View>
@@ -301,7 +301,7 @@ const SymptomsForm = ({ language = 'en', symptomsData = {}, onSubmit }) => {
             placeholder={t.allergiesPlaceholder}
             value={allergies}
             onChangeText={setAllergies}
-            multiline
+            multiline={true}
             numberOfLines={2}
           />
         </View>
