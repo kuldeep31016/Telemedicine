@@ -1,18 +1,73 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Dimensions,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
 import { useSelector } from 'react-redux';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
+import { firebase } from '../../config/firebase';
 
 const { width } = Dimensions.get('window');
 
 const PatientDashboardScreen = ({ navigation }) => {
-  const { user } = useSelector((state) => state.user);
+  const nav = useNavigation();
+  const [fullName, setFullName] = useState('');
+
+  useEffect(() => {
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const doc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
+        if (doc.exists) {
+          const data = doc.data();
+          if (data?.fullName) {
+            setFullName(data.fullName);
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.log('Error fetching user profile for dashboard:', error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    nav.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={{ marginRight: 16 }}
+        >
+          <Icon name="logout" size={22} color="#FFFFFF" />
+        </TouchableOpacity>
+      ),
+      headerTitle: 'Kuldeep Sehat',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nav]);
+
+  const handleLogout = () => {
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await firebase.auth().signOut();
+          } catch (error) {
+            Alert.alert('Error', 'Failed to logout. Please try again.');
+          }
+        },
+      },
+    ]);
+  };
+
+  const firstName = fullName ? fullName.split(' ')[0] : 'User';
 
   const quickActions = [
     {
@@ -52,9 +107,9 @@ const PatientDashboardScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
+        <Text style={styles.hiGreeting}>{`Hi, ${firstName}!`}</Text>
         <Text style={styles.greeting}>ਸਤ ਸ੍ਰੀ ਅਕਾਲ</Text>
         <Text style={styles.greetingEn}>Good Morning</Text>
-        <Text style={styles.userName}>{user?.name || 'User'}</Text>
         <Text style={styles.tagline}>ਤੁਸੀਂ ਕਿਵੇਂ ਮਹਿਸੂਸ ਕਰ ਰਹੇ ਹੋ?</Text>
         <Text style={styles.taglineEn}>How are you feeling today?</Text>
       </View>
@@ -124,10 +179,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greeting: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 2,
+  },
+  hiGreeting: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   greetingEn: {
     fontSize: 18,
