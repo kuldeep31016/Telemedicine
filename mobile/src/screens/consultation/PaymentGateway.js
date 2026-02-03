@@ -457,7 +457,7 @@ const PaymentGateway = ({ language, doctor, consultationType, onNext, onBack }) 
                   onChangeText={(text) => setPaymentDetails(prev => ({ ...prev, cvv: text }))}
                   keyboardType="numeric"
                   maxLength={3}
-                  secureTextEntry
+                  secureTextEntry={true}
                 />
               </View>
             </View>
