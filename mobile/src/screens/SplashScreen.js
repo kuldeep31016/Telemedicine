@@ -17,7 +17,7 @@ const SplashScreen = ({ navigation }) => {
       try {
         const currentUser = firebase.auth().currentUser;
         if (currentUser) {
-          // User already logged in → go to Home
+          // User already logged in → go straight to Home
           navigation.reset({
             index: 0,
             routes: [{ name: 'Home' }],
@@ -27,7 +27,7 @@ const SplashScreen = ({ navigation }) => {
 
         const onboardingCompleted = await AsyncStorage.getItem('@onboardingCompleted');
         if (onboardingCompleted === 'true') {
-          navigation.replace('Landing');
+          navigation.replace('Welcome');
         } else {
           navigation.replace('Onboarding');
         }

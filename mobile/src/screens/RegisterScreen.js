@@ -9,17 +9,16 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { firebase } from '../config/firebase';
+import { authAPI } from '../services/api';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
-import { authAPI } from '../services/api';
 
 const COLORS = {
   primary: '#2563EB',
-  background: '#FFFFFF',
-  text: '#0F172A',
+  background: '#F8FAFC',
+  text: '#1E293B',
   error: '#EF4444',
   success: '#10B981',
-  labelGray: '#334155',
 };
 
 const RegisterScreen = ({ navigation }) => {
@@ -102,83 +101,85 @@ const RegisterScreen = ({ navigation }) => {
     return message || 'Something went wrong. Please try again.';
   };
 
+  const withTimeout = (promise, ms, label = 'request') => {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`${label} timed out`));
+      }, ms);
+    });
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      clearTimeout(timeoutId);
+    });
+  };
+
+  const ageToDateOfBirthISO = (ageNumber) => {
+    // Backend requires dateOfBirth (Date). We only collect age in UI.
+    // Approximate DOB: Jan 1 of (currentYear - age).
+    const now = new Date();
+    const year = now.getFullYear() - ageNumber;
+    const dob = new Date(year, 0, 1);
+    return dob.toISOString();
+  };
+
   const handleRegister = async () => {
     if (!validate()) return;
 
     setLoading(true);
     try {
-      // Step 1: Create Firebase user
+      console.log('📝 Register: creating Firebase user...');
       const { user } = await firebase
         .auth()
         .createUserWithEmailAndPassword(email.trim(), password);
 
-      // Step 2: Save to Firestore
-      await firebase.firestore().collection('users').doc(user.uid).set({
-        fullName: fullName.trim(),
-        phoneNumber: `+91${phoneNumber.trim()}`,
-        email: email.trim().toLowerCase(),
-        age: age.trim(),
-        gender,
-        village: village.trim(),
-        district: district.trim(),
-        state: 'Punjab',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        userType: 'patient',
-      });
+      const uid = user.uid;
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPhone = `+91${phoneNumber.trim()}`;
+      const normalizedGender = (gender || 'Male').toLowerCase(); // male/female/other
+      const ageNumber = Number(age);
+      const dateOfBirth = ageToDateOfBirthISO(ageNumber);
 
-      // Step 3: Save to MongoDB backend
-      const currentYear = new Date().getFullYear();
-      const birthYear = currentYear - parseInt(age.trim());
-      const dateOfBirth = new Date(birthYear, 0, 1); // January 1st of birth year
-
-      // Generate unique username by adding timestamp
-      const baseUsername = email.trim().split('@')[0];
-      const uniqueUsername = `${baseUsername}_${Date.now()}`;
-
-      const patientData = {
-        firebaseUid: user.uid,
-        name: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        phone: `+91${phoneNumber.trim()}`,
-        username: uniqueUsername,
-        role: 'patient',
-        dateOfBirth: dateOfBirth.toISOString(),
-        gender: gender.toLowerCase(),
-        address: {
-          street: '',
-          city: village.trim(),
+      console.log('📝 Register: saving profile to Firestore...');
+      await withTimeout(
+        firebase.firestore().collection('users').doc(uid).set({
+          fullName: fullName.trim(),
+          phoneNumber: normalizedPhone,
+          email: normalizedEmail,
+          age: age.trim(),
+          gender,
+          village: village.trim(),
+          district: district.trim(),
           state: 'Punjab',
-          pincode: district.trim()
-        }
-      };
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          userType: 'patient',
+          firebaseUid: uid,
+        }),
+        12000,
+        'Firestore save',
+      );
 
-      try {
-        console.log('📤 Sending to MongoDB:', JSON.stringify(patientData, null, 2));
-        console.log('📡 API URL:', 'http://192.168.1.5:3000/api/v1/auth/register');
-        
-        // Add timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('MongoDB timeout - taking too long')), 10000)
-        );
-        
-        const response = await Promise.race([
-          authAPI.register(patientData),
-          timeoutPromise
-        ]);
-        
-        console.log('✅ Patient registered in MongoDB successfully:', response.data);
-      } catch (backendError) {
-        console.error('❌ MongoDB registration error:', backendError);
-        console.error('❌ Error response:', backendError.response);
-        console.error('❌ Error status:', backendError.response?.status);
-        console.error('❌ Error data:', JSON.stringify(backendError.response?.data, null, 2));
-        console.error('❌ Error message:', backendError.message);
-        // Continue even if backend fails - user is already in Firebase
-        console.log('⚠️ Continuing without MongoDB - user saved in Firebase');
-      }
-
-      // Stop loading BEFORE showing alert
-      setLoading(false);
+      console.log('📝 Register: registering patient in MongoDB via backend...');
+      // Backend route is /api/v1/auth/register (see backend/src/routes/index.js)
+      // It requires firebaseUid, role, and patient schema requires dateOfBirth.
+      await withTimeout(
+        authAPI.register({
+          firebaseUid: uid,
+          role: 'patient',
+          name: fullName.trim(),
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          dateOfBirth,
+          gender: normalizedGender,
+          address: {
+            city: village.trim(),
+            state: 'Punjab',
+          },
+          district: district.trim(),
+        }),
+        12000,
+        'Backend register',
+      );
 
       Alert.alert(
         'Registration Successful',
@@ -191,9 +192,28 @@ const RegisterScreen = ({ navigation }) => {
         ],
       );
     } catch (error) {
-      setLoading(false);
+      console.log('❌ Register error:', error?.code, error?.message);
+
+      // If backend/Firestore failed after Firebase account creation,
+      // try to clean up the partially created Firebase user to avoid inconsistent state.
+      try {
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser) {
+          await currentUser.delete();
+        }
+      } catch (cleanupError) {
+        console.log('Cleanup (delete user) failed:', cleanupError?.message);
+      }
+
       const friendly = getFriendlyError(error.code, error.message);
-      Alert.alert('Registration Error', friendly);
+      const message =
+        friendly === (error.message || '')
+          ? `${friendly}\n\nIf this keeps happening, check API base URL and Firebase config.`
+          : friendly;
+
+      Alert.alert('Registration Error', message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -368,57 +388,54 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 32,
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    paddingBottom: 24,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '700',
     color: COLORS.text,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
     color: '#64748B',
-    marginBottom: 28,
-    lineHeight: 20,
+    marginBottom: 20,
   },
   helperText: {
     fontSize: 12,
     color: '#64748B',
-    marginTop: -12,
-    marginBottom: 12,
+    marginTop: -8,
+    marginBottom: 8,
   },
   genderContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   genderLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#334155',
-    marginBottom: 8,
+    color: COLORS.text,
+    marginBottom: 6,
   },
   genderRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   genderOption: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 10,
     textAlign: 'center',
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    color: '#64748B',
-    fontSize: 14,
-    fontWeight: '500',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    color: '#0F172A',
+    fontSize: 13,
   },
   genderOptionActive: {
-    backgroundColor: '#2563EB',
-    borderColor: '#2563EB',
-    color: '#FFFFFF',
+    backgroundColor: '#DBEAFE',
+    borderColor: COLORS.primary,
+    color: COLORS.primary,
     fontWeight: '600',
   },
   errorText: {
