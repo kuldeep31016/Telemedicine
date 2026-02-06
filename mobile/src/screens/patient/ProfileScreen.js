@@ -1,16 +1,89 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { firebase } from '../../config/firebase';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const ProfileScreen = ({ navigation }) => {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const user = firebase.auth().currentUser;
+      const storedData = await AsyncStorage.getItem('user_data');
+      
+      if (storedData) {
+        setUserData(JSON.parse(storedData));
+      } else if (user) {
+        // Fallback to Firebase data
+        setUserData({
+          name: user.displayName || 'User',
+          email: user.email,
+          phone: user.phoneNumber || 'Not set',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?\n\nਕੀ ਤੁਸੀਂ ਲੌਗਆਉਟ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?',
+      [
+        {
+          text: 'Cancel / ਰੱਦ ਕਰੋ',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout / ਲੌਗਆਉਟ',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Sign out from Firebase
+              await firebase.auth().signOut();
+              
+              // Clear local storage
+              await AsyncStorage.multiRemove([
+                'auth_token',
+                'user_data',
+                '@rememberMe',
+                '@savedEmail'
+              ]);
+              
+              // Navigate to Landing screen
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Landing' }],
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const userProfile = {
-    name: 'ਗੁਰਪ੍ਰੀਤ ਸਿੰਘ',
-    nameEn: 'Gurpreet Singh',
-    phone: '+91-98765-43210',
-    age: '35 ਸਾਲ',
-    gender: 'ਮਰਦ',
-    village: 'ਨਭਾ, ਪਟਿਆਲਾ',
-    emergencyContact: '+91-98765-43211',
-    bloodGroup: 'B+',
+    name: userData?.name || 'User',
+    nameEn: userData?.name || 'User',
+    phone: userData?.phone || 'Not set',
+    email: userData?.email || 'Not set',
+    age: '35 years / ਸਾਲ',
+    gender: userData?.gender || 'Not set',
+    village: userData?.address?.city || 'Not set',
+    emergencyContact: 'Not set',
+    bloodGroup: 'Not set',
   };
 
   const profileSections = [
@@ -33,11 +106,28 @@ const ProfileScreen = ({ navigation }) => {
     },
   ];
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>ਮੇਰੀ ਪ੍ਰੋਫਾਈਲ</Text>
-        <Text style={styles.subtitle}>My Profile</Text>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.title}>ਮੇਰੀ ਪ੍ਰੋਫਾਈਲ</Text>
+          <Text style={styles.subtitle}>My Profile</Text>
+        </View>
+        <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.profileContainer}>
@@ -74,9 +164,15 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.settingsButtonTextEn}>Settings</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logoutButton}>
-            <Text style={styles.logoutButtonText}>ਲਾਗ ਆਉਟ</Text>
-            <Text style={styles.logoutButtonTextEn}>Logout</Text>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Icon name="logout" size={20} color="#fff" style={styles.logoutIcon} />
+            <View>
+              <Text style={styles.logoutButtonText}>ਲਾਗ ਆਉਟ</Text>
+              <Text style={styles.logoutButtonTextEn}>Logout</Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -89,13 +185,33 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#666',
+  },
   header: {
     backgroundColor: '#2c5aa0',
     padding: 20,
     paddingTop: 60,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTextContainer: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerSpacer: {
+    width: 40,
   },
   title: {
     fontSize: 28,
@@ -210,7 +326,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F44336',
     paddingVertical: 15,
     borderRadius: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutIcon: {
+    marginRight: 8,
   },
   logoutButtonText: {
     color: '#fff',

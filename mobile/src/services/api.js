@@ -5,8 +5,9 @@ import { logout } from '../store/slices/authSlice';
 import io from 'socket.io-client';
 
 // Use environment variables from .env file
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.1.6:3000/api';
-const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.1.6:3000';
+// For mobile emulator/simulator, use computer's IP address instead of localhost
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.1.5:3000/api';
+const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.1.5:3000';
 const API_TIMEOUT = parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT) || 30000;
 const SOCKET_TIMEOUT = parseInt(process.env.EXPO_PUBLIC_SOCKET_TIMEOUT) || 5000;
 
@@ -107,15 +108,19 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  register: (userData) => api.post('/auth/register', userData),
-  verifyOTP: (phone, otp) => api.post('/auth/verify-otp', { phone, otp }),
-  resendOTP: (phone) => api.post('/auth/resend-otp', { phone }),
-  login: (phone, password) => api.post('/auth/login', { phone, password }),
-  logout: () => api.post('/auth/logout'),
-  getProfile: () => api.get('/auth/profile'),
-  updateProfile: (profileData) => api.put('/auth/profile', profileData),
+  register: (userData) => api.post('/v1/auth/register', userData),
+  verifyOTP: (phone, otp) => api.post('/v1/auth/verify-otp', { phone, otp }),
+  resendOTP: (phone) => api.post('/v1/auth/resend-otp', { phone }),
+  login: (firebaseToken) => api.post('/v1/auth/login', {}, {
+    headers: {
+      'Authorization': `Bearer ${firebaseToken}`
+    }
+  }),
+  logout: () => api.post('/v1/auth/logout'),
+  getProfile: () => api.get('/v1/auth/profile'),
+  updateProfile: (profileData) => api.put('/v1/auth/profile', profileData),
   changePassword: (currentPassword, newPassword) => 
-    api.put('/auth/change-password', { currentPassword, newPassword }),
+    api.put('/v1/auth/change-password', { currentPassword, newPassword }),
 };
 
 // Patient Auth API
