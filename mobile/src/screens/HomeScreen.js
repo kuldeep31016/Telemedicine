@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import ConsultationFlow from './consultation/ConsultationFlow';
 import CheckSymptomsScreen from './CheckSymptomsScreen';
 import ASHAWorkerHub from './ASHAWorkerHub';
@@ -74,7 +73,7 @@ const translations = {
   }
 };
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = () => {
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [showConsultationFlow, setShowConsultationFlow] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -126,20 +125,13 @@ const HomeScreen = ({ navigation }) => {
     <ScrollView style={styles.container}>
       <StatusBar style="auto" />
       
-      {/* Language Selector and Profile Icon */}
+      {/* Language Selector */}
       <View style={styles.languageBar}>
         <TouchableOpacity 
           style={styles.languageButton}
           onPress={() => setShowLanguageModal(true)}
         >
           <Text style={styles.languageButtonText}>🌐 {t.selectLanguage}</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.profileIconButton}
-          onPress={() => navigation.navigate('Profile')}
-        >
-          <Icon name="account-circle" size={36} color="#2563EB" />
         </TouchableOpacity>
       </View>
 
@@ -361,29 +353,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4f8',
   },
   languageBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#2563eb',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    paddingTop: 50,
+    padding: 10,
+    alignItems: 'center',
   },
   languageButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
+    marginTop: 35,
+    marginLeft: 130,
   },
   languageButtonText: {
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
-  },
-  profileIconButton: {
-    padding: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
   },
   header: {
     backgroundColor: '#2563eb',
