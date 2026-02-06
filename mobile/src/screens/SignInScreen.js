@@ -80,6 +80,7 @@ const SignInScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
+      // Sign in with Firebase
       await firebase
         .auth()
         .signInWithEmailAndPassword(email.trim(), password);
@@ -92,8 +93,7 @@ const SignInScreen = ({ navigation }) => {
         await AsyncStorage.removeItem('@savedEmail');
       }
 
-      // Firebase auth state listener in SplashScreen will take user to Home on next app load.
-      // Here we directly reset to Home.
+      // Navigate to Home
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
