@@ -11,13 +11,15 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { firebase } from '../config/firebase';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
+import { authAPI } from '../services/api';
 
 const COLORS = {
   primary: '#2563EB',
-  background: '#F8FAFC',
-  text: '#1E293B',
+  background: '#FFFFFF',
+  text: '#0F172A',
   error: '#EF4444',
   success: '#10B981',
+  labelGray: '#334155',
 };
 
 const RegisterScreen = ({ navigation }) => {
@@ -105,10 +107,12 @@ const RegisterScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
+      // Step 1: Create Firebase user
       const { user } = await firebase
         .auth()
         .createUserWithEmailAndPassword(email.trim(), password);
 
+      // Step 2: Save to Firestore
       await firebase.firestore().collection('users').doc(user.uid).set({
         fullName: fullName.trim(),
         phoneNumber: `+91${phoneNumber.trim()}`,
@@ -122,6 +126,60 @@ const RegisterScreen = ({ navigation }) => {
         userType: 'patient',
       });
 
+      // Step 3: Save to MongoDB backend
+      const currentYear = new Date().getFullYear();
+      const birthYear = currentYear - parseInt(age.trim());
+      const dateOfBirth = new Date(birthYear, 0, 1); // January 1st of birth year
+
+      // Generate unique username by adding timestamp
+      const baseUsername = email.trim().split('@')[0];
+      const uniqueUsername = `${baseUsername}_${Date.now()}`;
+
+      const patientData = {
+        firebaseUid: user.uid,
+        name: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: `+91${phoneNumber.trim()}`,
+        username: uniqueUsername,
+        role: 'patient',
+        dateOfBirth: dateOfBirth.toISOString(),
+        gender: gender.toLowerCase(),
+        address: {
+          street: '',
+          city: village.trim(),
+          state: 'Punjab',
+          pincode: district.trim()
+        }
+      };
+
+      try {
+        console.log('📤 Sending to MongoDB:', JSON.stringify(patientData, null, 2));
+        console.log('📡 API URL:', 'http://192.168.1.5:3000/api/v1/auth/register');
+        
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('MongoDB timeout - taking too long')), 10000)
+        );
+        
+        const response = await Promise.race([
+          authAPI.register(patientData),
+          timeoutPromise
+        ]);
+        
+        console.log('✅ Patient registered in MongoDB successfully:', response.data);
+      } catch (backendError) {
+        console.error('❌ MongoDB registration error:', backendError);
+        console.error('❌ Error response:', backendError.response);
+        console.error('❌ Error status:', backendError.response?.status);
+        console.error('❌ Error data:', JSON.stringify(backendError.response?.data, null, 2));
+        console.error('❌ Error message:', backendError.message);
+        // Continue even if backend fails - user is already in Firebase
+        console.log('⚠️ Continuing without MongoDB - user saved in Firebase');
+      }
+
+      // Stop loading BEFORE showing alert
+      setLoading(false);
+
       Alert.alert(
         'Registration Successful',
         'Your account has been created. Please sign in to continue.',
@@ -133,10 +191,9 @@ const RegisterScreen = ({ navigation }) => {
         ],
       );
     } catch (error) {
+      setLoading(false);
       const friendly = getFriendlyError(error.code, error.message);
       Alert.alert('Registration Error', friendly);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -311,54 +368,57 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 24,
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    paddingBottom: 32,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
     color: COLORS.text,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
     color: '#64748B',
-    marginBottom: 20,
+    marginBottom: 28,
+    lineHeight: 20,
   },
   helperText: {
     fontSize: 12,
     color: '#64748B',
-    marginTop: -8,
-    marginBottom: 8,
+    marginTop: -12,
+    marginBottom: 12,
   },
   genderContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   genderLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 6,
+    color: '#334155',
+    marginBottom: 8,
   },
   genderRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   genderOption: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 14,
     textAlign: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    color: '#0F172A',
-    fontSize: 13,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '500',
   },
   genderOptionActive: {
-    backgroundColor: '#DBEAFE',
-    borderColor: COLORS.primary,
-    color: COLORS.primary,
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   errorText: {
