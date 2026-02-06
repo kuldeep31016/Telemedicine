@@ -16,11 +16,8 @@ class AuthService {
   // Helper to find user across all role-based collections
   async findUserAcrossModels(query) {
     const models = Object.values(roleModelMap);
-    for (const Model of models) {
-      const user = await Model.findOne(query);
-      if (user) return user;
-    }
-    return null;
+    const results = await Promise.all(models.map(Model => Model.findOne(query)));
+    return results.find(user => user !== null) || null;
   }
 
   // Register new user based on role
