@@ -1,0 +1,12 @@
+{
+    "name": "telemedicine-root",
+    "version": "1.0.0",
+    "scripts": {
+        "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix web-react-vite\"",
+        "install-all": "npm install && npm install --prefix backend && npm install --prefix web-react-vite",
+        "start:legacy": "concurrently \"npm run dev --prefix backend\" \"npm start --prefix web-react\""
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
