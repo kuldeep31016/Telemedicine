@@ -59,15 +59,13 @@ const DoctorLogin = () => {
 
     try {
       const user = await login(formData.email, formData.password);
-      
+
       console.log('[DoctorLogin] User logged in:', user);
-      
+
       // Verify user role
       if (user && user.role === 'doctor') {
         console.log('[DoctorLogin] Navigating to doctor dashboard');
-        setTimeout(() => {
-          navigate('/doctor/dashboard', { replace: true });
-        }, 100);
+        navigate('/doctor/dashboard', { replace: true });
       } else if (user) {
         // User logged in but not a doctor
         console.log('[DoctorLogin] User is not doctor, logging out');
