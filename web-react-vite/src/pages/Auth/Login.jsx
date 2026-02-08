@@ -65,19 +65,19 @@ const Login = () => {
       // Redirect based on role
       switch (user.role) {
         case 'admin':
-          navigate('/admin/dashboard');
+          navigate('/admin/dashboard', { replace: true });
           break;
         case 'doctor':
-          navigate('/doctor/dashboard');
+          navigate('/doctor/dashboard', { replace: true });
           break;
         case 'patient':
-          navigate('/patient/dashboard');
+          navigate('/patient/dashboard', { replace: true });
           break;
         case 'asha_worker':
-          navigate('/asha/dashboard');
+          navigate('/asha/dashboard', { replace: true });
           break;
         default:
-          navigate('/');
+          navigate('/', { replace: true });
       }
     } catch (error) {
       console.error('Login error:', error);
