@@ -19,6 +19,9 @@ import PatientLogin from './pages/Auth/PatientLogin';
 
 // Dashboard Pages
 import AdminDashboard from './pages/Admin/Dashboard';
+import DoctorsManagement from './pages/Admin/DoctorsManagement';
+import DoctorProfile from './pages/Admin/DoctorProfile';
+import PatientsManagement from './pages/Admin/PatientsManagement';
 import DoctorDashboard from './pages/Doctor/Dashboard';
 import PatientDashboard from './pages/Patient/Dashboard';
 
@@ -64,7 +67,7 @@ function App() {
           },
         }}
       />
-      
+
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
@@ -100,6 +103,21 @@ function App() {
         <Route path="/admin/dashboard" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/doctors" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <DoctorsManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/doctors/:doctorId" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <DoctorProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/patients" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <PatientsManagement />
           </ProtectedRoute>
         } />
 
