@@ -15,6 +15,15 @@ export const adminAPI = {
   },
 
   /**
+   * Get recent registrations
+   * @returns {Promise} Recent registrations
+   */
+  getRecentRegistrations: async () => {
+    const response = await api.get('/v1/admin/dashboard/recent-registrations');
+    return response.data;
+  },
+
+  /**
    * Get all users
    * @param {Object} params - Query parameters
    * @returns {Promise} Users list
@@ -35,6 +44,16 @@ export const adminAPI = {
   },
 
   /**
+   * Get all patients
+   * @param {Object} params - Query parameters
+   * @returns {Promise} Patients list
+   */
+  getPatients: async (params = {}) => {
+    const response = await api.get('/v1/admin/patients', { params });
+    return response.data;
+  },
+
+  /**
    * Update user status
    * @param {string} userId - User ID
    * @param {Object} data - Status update data
@@ -42,6 +61,16 @@ export const adminAPI = {
    */
   updateUserStatus: async (userId, data) => {
     const response = await api.put(`/v1/admin/users/${userId}/status`, data);
+    return response.data;
+  },
+
+  /**
+   * Get doctor by ID
+   * @param {string} doctorId - Doctor ID
+   * @returns {Promise} Doctor details
+   */
+  getDoctorById: async (doctorId) => {
+    const response = await api.get(`/v1/admin/doctors/${doctorId}`);
     return response.data;
   },
 };
