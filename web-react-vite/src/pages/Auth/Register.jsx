@@ -111,14 +111,29 @@ const Register = () => {
       // Extract password and confirmPassword from formData
       // Do NOT send password to backend - Firebase handles it
       const { password, confirmPassword, ...userData } = formData;
-      
+
       const registeredUser = await register(formData.email, password, userData);
-      
+
       console.log('[Register] User registered successfully:', registeredUser);
-      
-      // No need to manually navigate - PublicRoute will handle redirect
-      // after user state updates in authStore
-      
+
+      // Explicitly navigate based on role
+      switch (registeredUser.role) {
+        case 'admin':
+          navigate('/admin/dashboard', { replace: true });
+          break;
+        case 'doctor':
+          navigate('/doctor/dashboard', { replace: true });
+          break;
+        case 'patient':
+          navigate('/patient/dashboard', { replace: true });
+          break;
+        case 'asha_worker':
+          navigate('/asha/dashboard', { replace: true });
+          break;
+        default:
+          navigate('/', { replace: true });
+      }
+
     } catch (error) {
       console.error('Registration error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
