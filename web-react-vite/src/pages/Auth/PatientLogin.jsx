@@ -60,7 +60,7 @@ const PatientLogin = () => {
     try {
       const user = await login(formData.email, formData.password);
       if (user.role === 'patient') {
-        navigate('/patient/dashboard');
+        navigate('/patient/dashboard', { replace: true });
       } else {
         alert('Access denied. This portal is for patients only.');
         await useAuthStore.getState().logout();
