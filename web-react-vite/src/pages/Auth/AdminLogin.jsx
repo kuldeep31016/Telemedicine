@@ -59,15 +59,13 @@ const AdminLogin = () => {
 
     try {
       const user = await login(formData.email, formData.password);
-      
+
       console.log('[AdminLogin] User logged in:', user);
-      
+
       // Verify user role
       if (user && user.role === 'admin') {
         console.log('[AdminLogin] Navigating to admin dashboard');
-        setTimeout(() => {
-          navigate('/admin/dashboard', { replace: true });
-        }, 100);
+        navigate('/admin/dashboard', { replace: true });
       } else if (user) {
         // User logged in but not an admin
         console.log('[AdminLogin] User is not admin, logging out');
