@@ -9,5 +9,5 @@
         "node_modules/*",
         "uploads/*"
     ],
-    "exec": "node server.js"
+    "exec": "node"
 }

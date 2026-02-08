@@ -1,0 +1,94 @@
+
+> telemedicine-backend@1.0.0 dev
+> nodemon server.js
+
+[33m[nodemon] 3.1.11[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): src/**/* server.js[39m
+[33m[nodemon] watching extensions: js,json[39m
+[32m[nodemon] starting `node server.js server.js`[39m
+2026-02-08 15:05:21 [[32minfo[39m]: Firebase Admin initialized successfully 
+2026-02-08 15:05:21 [[32minfo[39m]: Server running in development mode on port 5001 
+2026-02-08 15:05:24 [[32minfo[39m]: MongoDB connected successfully 
+[0mGET /api/v1/auth/me [36m304[0m 183.037 ms - -[0m
+[0mGET /api/v1/admin/doctors [32m200[0m 44.975 ms - 792[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 51.833 ms - -[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 48.373 ms - -[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 45.478 ms - -[0m
+[0mGET /api/v1/auth/me [36m304[0m 25.136 ms - -[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 46.939 ms - -[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 46.497 ms - -[0m
+[0mPOST /api/v1/auth/logout [32m200[0m 25.990 ms - 58[0m
+2026-02-08 15:14:05 [[31merror[39m]: Authentication error: User not found {"statusCode":401,"isOperational":true,"stack":"Error: User not found\n    at AuthService.getUserByFirebaseUid (/Users/kuldeepraj/Desktop/Telemedicine/backend/src/services/auth.service.js:92:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async authenticate (/Users/kuldeepraj/Desktop/Telemedicine/backend/src/middleware/auth.middleware.js:43:18)"}
+2026-02-08 15:14:05 [[31merror[39m]: User not found {"stack":"Error: User not found\n    at authenticate (/Users/kuldeepraj/Desktop/Telemedicine/backend/src/middleware/auth.middleware.js:62:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","url":"/api/v1/auth/me","method":"GET","ip":"::1"}
+[0mGET /api/v1/auth/me [33m401[0m 28.249 ms - 269[0m
+2026-02-08 15:14:05 [[32minfo[39m]: New patient registered: hjfvihfi@gmail.com 
+[0mPOST /api/v1/auth/register [32m201[0m 322.130 ms - 380[0m
+[0mGET /api/v1/auth/me [32m200[0m 31.594 ms - 384[0m
+[0mGET /api/v1/auth/me [36m304[0m 115.094 ms - -[0m
+[0mPOST /api/v1/auth/logout [32m200[0m 24.273 ms - 58[0m
+[0mGET /api/v1/auth/me [32m200[0m 24.333 ms - 389[0m
+2026-02-08 15:15:19 [[32minfo[39m]: User logged in: uldeepraj06@gmail.com (admin) 
+[0mPOST /api/v1/auth/login [32m200[0m 307.294 ms - 378[0m
+[0mGET /api/v1/auth/me [32m200[0m 23.169 ms - 389[0m
+[0mGET /api/v1/auth/me [36m304[0m 22.024 ms - -[0m
+[0mGET /api/v1/auth/me [36m304[0m 21.591 ms - -[0m
+[0mPOST /api/v1/auth/logout [32m200[0m 22.455 ms - 58[0m
+[0mGET /api/v1/auth/me [32m200[0m 22.749 ms - 437[0m
+2026-02-08 15:17:15 [[32minfo[39m]: User logged in: admin@nabha.com (doctor) 
+[0mPOST /api/v1/auth/login [32m200[0m 144.844 ms - 426[0m
+[0mGET /api/v1/auth/me [32m200[0m 22.790 ms - 437[0m
+[0mGET /api/v1/auth/me [36m304[0m 30.233 ms - -[0m
+[0mGET /api/v1/auth/me [32m200[0m 27.195 ms - 389[0m
+2026-02-08 15:18:55 [[32minfo[39m]: User logged in: uldeepraj06@gmail.com (admin) 
+[0mPOST /api/v1/auth/login [32m200[0m 69.799 ms - 378[0m
+[0mGET /api/v1/auth/me [32m200[0m 21.598 ms - 389[0m
+[0mGET /api/v1/admin/doctors [32m200[0m 44.998 ms - 792[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 45.324 ms - -[0m
+2026-02-08 15:19:39 [[32minfo[39m]: User logged in: uldeepraj06@gmail.com (admin) 
+[0mPOST /api/v1/auth/login [32m200[0m 83.353 ms - 378[0m
+[0mGET /api/v1/auth/me [32m200[0m 27.502 ms - 389[0m
+[0mGET /api/v1/auth/me [36m304[0m 25.002 ms - -[0m
+2026-02-08 15:24:56 [[32minfo[39m]: User logged in: uldeepraj06@gmail.com (admin) 
+[0mPOST /api/v1/auth/login [32m200[0m 92.209 ms - 378[0m
+[0mGET /api/v1/auth/me [32m200[0m 22.674 ms - 389[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 45.744 ms - -[0m
+[0mGET /api/v1/admin/doctors [36m304[0m 42.616 ms - -[0m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js server.js`[39m
+2026-02-08 15:41:37 [[32minfo[39m]: Firebase Admin initialized successfully 
+2026-02-08 15:41:37 [[31merror[39m]: UNCAUGHT EXCEPTION! Shutting down... listen EADDRINUSE: address already in use :::5001 {"code":"EADDRINUSE","errno":-48,"syscall":"listen","address":"::","port":5001,"stack":"Error: listen EADDRINUSE: address already in use :::5001\n    at Server.setupListenHandle [as _listen2] (node:net:1908:16)\n    at listenInCluster (node:net:1965:12)\n    at Server.listen (node:net:2067:7)\n    at Function.listen (/Users/kuldeepraj/Desktop/Telemedicine/backend/node_modules/express/lib/application.js:635:24)\n    at Object.<anonymous> (/Users/kuldeepraj/Desktop/Telemedicine/backend/server.js:16:20)\n    at Module._compile (node:internal/modules/cjs/loader:1521:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)\n    at Module.load (node:internal/modules/cjs/loader:1266:32)\n    at Module._load (node:internal/modules/cjs/loader:1091:12)\n    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)"}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js server.js`[39m
+2026-02-08 15:41:45 [[32minfo[39m]: Firebase Admin initialized successfully 
+2026-02-08 15:41:45 [[32minfo[39m]: Server running in development mode on port 5001 
+2026-02-08 15:41:48 [[32minfo[39m]: MongoDB connected successfully 
+[0mGET /api/v1/auth/me [36m304[0m 177.061 ms - -[0m
+[0mGET /api/v1/auth/me [36m304[0m 22.671 ms - -[0m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js server.js`[39m
+2026-02-08 15:43:17 [[32minfo[39m]: Firebase Admin initialized successfully 
+/Users/kuldeepraj/Desktop/Telemedicine/backend/src/routes/admin.routes.js:1
+c
+^
+
+ReferenceError: c is not defined
+    at Object.<anonymous> (/Users/kuldeepraj/Desktop/Telemedicine/backend/src/routes/admin.routes.js:1:1)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Module.require (node:internal/modules/cjs/loader:1289:19)
+    at require (node:internal/modules/helpers:182:18)
+    at Object.<anonymous> (/Users/kuldeepraj/Desktop/Telemedicine/backend/src/routes/index.js:7:21)
+    at Module._compile (node:internal/modules/cjs/loader:1521:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+
+Node.js v20.20.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js server.js`[39m
+2026-02-08 15:43:18 [[32minfo[39m]: Firebase Admin initialized successfully 
+2026-02-08 15:43:18 [[31merror[39m]: UNCAUGHT EXCEPTION! Shutting down... listen EADDRINUSE: address already in use :::5001 {"code":"EADDRINUSE","errno":-48,"syscall":"listen","address":"::","port":5001,"stack":"Error: listen EADDRINUSE: address already in use :::5001\n    at Server.setupListenHandle [as _listen2] (node:net:1908:16)\n    at listenInCluster (node:net:1965:12)\n    at Server.listen (node:net:2067:7)\n    at Function.listen (/Users/kuldeepraj/Desktop/Telemedicine/backend/node_modules/express/lib/application.js:635:24)\n    at Object.<anonymous> (/Users/kuldeepraj/Desktop/Telemedicine/backend/server.js:16:20)\n    at Module._compile (node:internal/modules/cjs/loader:1521:14)\n    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)\n    at Module.load (node:internal/modules/cjs/loader:1266:32)\n    at Module._load (node:internal/modules/cjs/loader:1091:12)\n    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)"}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
