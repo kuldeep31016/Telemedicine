@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "555237969310",
+    "project_id": "telemedicine-dcfa2",
+    "storage_bucket": "telemedicine-dcfa2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:555237969310:android:efe374067f580fe15fda8f",
+        "android_client_info": {
+          "package_name": "com.company.telemedicine"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEXcpLYXM77M-2r0fI0emhU3jz8wQSVMY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
