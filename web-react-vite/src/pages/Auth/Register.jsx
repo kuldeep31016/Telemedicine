@@ -1,24 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Container,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Paper,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
-  Checkbox,
-  FormControlLabel,
-  Link as MuiLink,
-  CircularProgress
-} from '@mui/material';
 import { motion } from 'framer-motion';
+import { Mail, Lock, User, Phone, Briefcase, Heart, Calendar, ShieldCheck, PlusCircle } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import { AuthInput, AuthSelect, AuthButton, AuthSection, AuthHeader } from '../../components/auth/AuthFormElements';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -43,364 +28,209 @@ const Register = () => {
     dateOfBirth: '',
   });
 
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const validate = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.username.trim()) newErrors.username = 'Username is required';
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-
-    if (!formData.phone) {
-      newErrors.phone = 'Phone is required';
-    } else if (!/^\d{10}$/.test(formData.phone)) {
-      newErrors.phone = 'Phone must be 10 digits';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    // Role specific validation
-    if (formData.role === 'doctor') {
-      if (!formData.specialization.trim()) newErrors.specialization = 'Specialization is required';
-      if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License Number is required';
-    }
-
-    if (formData.role === 'asha_worker') {
-      if (!formData.assignedArea.trim()) newErrors.assignedArea = 'Assigned Area is required';
-    }
-
-    if (formData.role === 'patient') {
-      if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of Birth is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validate()) return;
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
 
     try {
-      // Extract password and confirmPassword from formData
-      // Do NOT send password to backend - Firebase handles it
       const { password, confirmPassword, ...userData } = formData;
-
       const registeredUser = await register(formData.email, password, userData);
 
-      console.log('[Register] User registered successfully:', registeredUser);
-
-      // Explicitly navigate based on role
       switch (registeredUser.role) {
-        case 'admin':
-          navigate('/admin/dashboard', { replace: true });
-          break;
-        case 'doctor':
-          navigate('/doctor/dashboard', { replace: true });
-          break;
-        case 'patient':
-          navigate('/patient/dashboard', { replace: true });
-          break;
-        case 'asha_worker':
-          navigate('/asha/dashboard', { replace: true });
-          break;
-        default:
-          navigate('/', { replace: true });
+        case 'admin': navigate('/admin/dashboard', { replace: true }); break;
+        case 'doctor': navigate('/doctor/dashboard', { replace: true }); break;
+        case 'patient': navigate('/patient/dashboard', { replace: true }); break;
+        case 'asha_worker': navigate('/asha/dashboard', { replace: true }); break;
+        default: navigate('/', { replace: true });
       }
-
-    } catch (error) {
-      console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
-      setErrors({ email: errorMessage });
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Registration failed');
     }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        py: 4
-      }}
-    >
-      <Container maxWidth="sm">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Paper
-            elevation={6}
-            sx={{
-              p: 4,
-              borderRadius: 4,
-              backdropFilter: 'blur(10px)',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)'
-            }}
-          >
-            <Box textAlign="center" mb={4}>
-              <Typography variant="h4" component="h1" fontWeight="bold" color="primary" gutterBottom>
-                Create Account
-              </Typography>
-              <Typography variant="body1" color="textSecondary">
-                Join our telemedicine platform
-              </Typography>
-            </Box>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px]">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-[600px] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden my-12"
+      >
+        <AuthHeader
+          title="Create Professional Account"
+          subtitle="Healthcare Network Onboarding"
+          icon={PlusCircle}
+          colorClass="bg-blue-600"
+        />
 
-            <form onSubmit={handleSubmit}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Full Name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    error={!!errors.name}
-                    helperText={errors.name}
-                    variant="outlined"
-                  />
-                </Grid>
+        {/* Form Body */}
+        <div className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="p-3.5 bg-red-50 border border-red-100 rounded-lg text-red-600 text-[11px] font-bold uppercase tracking-wider">
+                {error}
+              </div>
+            )}
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    error={!!errors.email}
-                    helperText={errors.email}
-                    variant="outlined"
-                  />
-                </Grid>
+            <AuthSection title="Identity Details" />
+            <AuthInput
+              label="Legal Full Name"
+              icon={User}
+              required
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Official Name"
+            />
+            <AuthInput
+              label="System Username"
+              icon={ShieldCheck}
+              required
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              placeholder="username123"
+            />
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    error={!!errors.phone}
-                    helperText={errors.phone}
-                    variant="outlined"
-                  />
-                </Grid>
+            <AuthInput
+              label="Contact Email"
+              icon={Mail}
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="name@provider.com"
+            />
+            <AuthInput
+              label="Primary Phone"
+              icon={Phone}
+              type="tel"
+              required
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="+1 (000) 000-0000"
+            />
 
-                <Grid item xs={12} sm={6}>
-                  {roleParam ? (
-                    <TextField
-                      fullWidth
-                      label="Username"
-                      name="username"
-                      value={formData.username}
-                      onChange={handleChange}
-                      error={!!errors.username}
-                      helperText={errors.username}
-                      variant="outlined"
-                    />
-                  ) : (
-                    <FormControl fullWidth variant="outlined">
-                      <InputLabel>Role</InputLabel>
-                      <Select
-                        name="role"
-                        value={formData.role}
-                        onChange={handleChange}
-                        label="Role"
-                      >
-                        <MenuItem value="patient">Patient</MenuItem>
-                        <MenuItem value="doctor">Doctor</MenuItem>
-                        <MenuItem value="asha_worker">ASHA Worker</MenuItem>
-                        <MenuItem value="admin">Admin</MenuItem>
-                      </Select>
-                    </FormControl>
-                  )}
-                </Grid>
+            {!roleParam && (
+              <AuthSelect
+                label="Account Role Type"
+                icon={ShieldCheck}
+                required
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                options={[
+                  { value: "patient", label: "Patient" },
+                  { value: "doctor", label: "Medical Provider" },
+                  { value: "asha_worker", label: "ASHA Worker" },
+                  { value: "admin", label: "Administrator" },
+                ]}
+              />
+            )}
 
-                {!roleParam && (
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Username"
-                      name="username"
-                      value={formData.username}
-                      onChange={handleChange}
-                      error={!!errors.username}
-                      helperText={errors.username}
-                      variant="outlined"
-                    />
-                  </Grid>
-                )}
+            {/* Conditional Roles */}
+            {formData.role === 'doctor' && (
+              <>
+                <AuthSection title="Professional Credentials" />
+                <AuthSelect
+                  label="Medical Specialty"
+                  icon={Heart}
+                  required
+                  value={formData.specialization}
+                  onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                  options={[
+                    { value: "", label: "Select Specialty", disabled: true },
+                    { value: "General Physician", label: "General Physician" },
+                    { value: "Cardiologist", label: "Cardiologist" },
+                    { value: "Dermatologist", label: "Dermatologist" },
+                    { value: "Psychiatrist", label: "Psychiatrist" },
+                  ]}
+                />
+                <AuthInput
+                  label="License Number"
+                  icon={Briefcase}
+                  required
+                  value={formData.licenseNumber}
+                  onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
+                  placeholder="MC/825421"
+                />
+              </>
+            )}
 
-                {/* Conditional Fields based on Role */}
-                {formData.role === 'doctor' && (
-                  <>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Specialization"
-                        name="specialization"
-                        value={formData.specialization}
-                        onChange={handleChange}
-                        error={!!errors.specialization}
-                        helperText={errors.specialization}
-                        variant="outlined"
-                        placeholder="e.g. Cardiologist"
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="License Number"
-                        name="licenseNumber"
-                        value={formData.licenseNumber}
-                        onChange={handleChange}
-                        error={!!errors.licenseNumber}
-                        helperText={errors.licenseNumber}
-                        variant="outlined"
-                      />
-                    </Grid>
-                  </>
-                )}
+            {formData.role === 'asha_worker' && (
+              <>
+                <AuthSection title="Deployment Info" />
+                <AuthInput
+                  label="Assigned Health Area"
+                  icon={ShieldCheck}
+                  required
+                  value={formData.assignedArea}
+                  onChange={(e) => setFormData({ ...formData, assignedArea: e.target.value })}
+                  placeholder="Village/Ward/Sector"
+                />
+              </>
+            )}
 
-                {formData.role === 'asha_worker' && (
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Assigned Area"
-                      name="assignedArea"
-                      value={formData.assignedArea}
-                      onChange={handleChange}
-                      error={!!errors.assignedArea}
-                      helperText={errors.assignedArea}
-                      variant="outlined"
-                      placeholder="e.g. Village Name, Ward No."
-                    />
-                  </Grid>
-                )}
+            {formData.role === 'patient' && (
+              <>
+                <AuthSection title="Patient Records" />
+                <AuthInput
+                  label="Date of Birth"
+                  icon={Calendar}
+                  type="date"
+                  required
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                />
+              </>
+            )}
 
-                {formData.role === 'patient' && (
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Date of Birth"
-                      name="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={handleChange}
-                      error={!!errors.dateOfBirth}
-                      helperText={errors.dateOfBirth}
-                      InputLabelProps={{ shrink: true }}
-                      variant="outlined"
-                    />
-                  </Grid>
-                )}
+            <AuthSection title="Secure Access" />
+            <AuthInput
+              label="Account Password"
+              icon={Lock}
+              type="password"
+              required
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="••••••••"
+            />
+            <AuthInput
+              label="Confirm Password"
+              icon={Lock}
+              type="password"
+              required
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              placeholder="••••••••"
+            />
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Password"
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    error={!!errors.password}
-                    helperText={errors.password}
-                    variant="outlined"
-                  />
-                </Grid>
+            <AuthButton
+              loading={loading}
+              securityText="All data is encrypted via 256-bit institutional standards"
+            >
+              Initialize Professional Profile
+            </AuthButton>
+          </form>
 
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Confirm Password"
-                    name="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    error={!!errors.confirmPassword}
-                    helperText={errors.confirmPassword}
-                    variant="outlined"
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={<Checkbox required color="primary" />}
-                    label={
-                      <Typography variant="body2" color="textSecondary">
-                        I agree to the{' '}
-                        <MuiLink component={Link} to="/terms" underline="hover">
-                          Terms of Service
-                        </MuiLink>{' '}
-                        and{' '}
-                        <MuiLink component={Link} to="/privacy" underline="hover">
-                          Privacy Policy
-                        </MuiLink>
-                      </Typography>
-                    }
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    disabled={loading}
-                    sx={{ py: 1.5, borderRadius: 2, textTransform: 'none', fontSize: '1.1rem' }}
-                  >
-                    {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
-                  </Button>
-                </Grid>
-              </Grid>
-            </form>
-
-            <Box mt={3} textAlign="center">
-              <Typography variant="body2" color="textSecondary">
-                Already have an account?{' '}
-                <MuiLink component={Link} to="/login" variant="subtitle2" underline="hover" fontWeight="bold">
-                  Sign in
-                </MuiLink>
-              </Typography>
-            </Box>
-          </Paper>
-        </motion.div>
-      </Container>
-    </Box>
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+              Already have an account?{' '}
+              <Link to="/login" className="text-slate-900 underline underline-offset-4 decoration-2 decoration-blue-100 font-black">
+                Return to Login
+              </Link>
+            </p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 

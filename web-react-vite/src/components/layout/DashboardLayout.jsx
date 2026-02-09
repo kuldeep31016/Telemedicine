@@ -47,10 +47,19 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
     setOpen(!open);
   };
 
+  // const handleLogout = async () => {
+  //   await logout();
+  //   navigate('/');
+  // };
   const handleLogout = async () => {
+  try {
     await logout();
-    navigate('/');
-  };
+    navigate('/', { replace: true });
+  } catch (error) {
+    console.error('Logout error:', error);
+    navigate('/', { replace: true });
+  }
+};
 
   const getRoleColor = (role) => {
     const colors = {

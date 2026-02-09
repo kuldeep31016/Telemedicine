@@ -42,4 +42,13 @@ export const patientAPI = {
     const response = await api.get('/v1/patient/medical-records');
     return response.data;
   },
+
+  /**
+   * Get all available doctors
+   * @returns {Promise} Doctors list
+   */
+  getDoctors: async () => {
+    const response = await api.get('/v1/users?role=doctor');
+    return response.data;
+  },
 };

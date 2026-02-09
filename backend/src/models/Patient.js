@@ -34,8 +34,7 @@ const patientSchema = new mongoose.Schema({
         default: 'patient'
     },
     dateOfBirth: {
-        type: Date,
-        required: true
+        type: Date
     },
     gender: {
         type: String,

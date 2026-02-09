@@ -201,7 +201,7 @@ const LandingPage = () => {
       </nav>
 
       {/* Main Hero Section - Full Width Image with Floating Text */}
-      <div className="pt-24 h-screen relative overflow-hidden">
+      <div className="pt-24 min-h-screen relative overflow-hidden z-10 pb-32">
         {/* Full Width Background Image - Positioned to the right */}
         <motion.div
           initial={{ opacity: 0, scale: 1.05 }}
@@ -222,7 +222,7 @@ const LandingPage = () => {
         <div className="absolute top-0 left-0 bottom-0 w-[50%] bg-white z-0" />
 
         {/* Floating Text Content - Positioned higher */}
-        <div className="relative z-10 max-w-7xl mx-auto px-10 pt-8 pb-4 h-[calc(100vh-96px)] flex items-start">
+        <div className="relative z-10 max-w-7xl mx-auto px-10 pt-8 pb-4 min-h-[calc(100vh-96px)] flex items-start">
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
@@ -334,8 +334,8 @@ const LandingPage = () => {
       </div>
 
       {/* Partners/Trust Section */}
-      <section className="py-20 px-10">
-        <div className="max-w-[1440px] mx-auto">
+      <section class="py-20 px-10 mt-10 relative z-0">
+         <div className="max-w-[1440px] mx-auto">
           <p className="text-center text-gray-400 font-bold uppercase tracking-[0.2em] mb-12">Trusted by 5000+ medical institutions globally</p>
           <div className="flex flex-wrap justify-between items-center opacity-30 grayscale gap-10">
             <span className="text-4xl font-extrabold italic">MedicalHub</span>

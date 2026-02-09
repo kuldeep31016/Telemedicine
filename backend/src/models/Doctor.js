@@ -42,6 +42,47 @@ const doctorSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    experience: {
+        type: Number,
+        default: 0
+    },
+    hourlyRate: {
+        type: Number,
+        default: 500
+    },
+    languages: {
+        type: [String],
+        default: ['English', 'Hindi']
+    },
+    availability: {
+        type: String,
+        default: 'Available Today'
+    },
+    rating: {
+        type: Number,
+        default: 4.5
+    },
+    profileImage: {
+        type: String,
+        default: ''
+    },
+    about: {
+        type: String,
+        default: ''
+    },
+    hospitalName: {
+        type: String,
+        default: 'City General Hospital'
+    },
+    registrationNumber: {
+        type: String,
+        default: 'MC/825421'
+    },
+    gender: {
+        type: String,
+        enum: ['Male', 'Female', 'Other'],
+        default: 'Male'
+    },
     isActive: {
         type: Boolean,
         default: true
