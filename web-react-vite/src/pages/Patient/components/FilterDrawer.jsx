@@ -4,8 +4,11 @@ import { X, RotateCcw } from 'lucide-react';
 
 const FilterDrawer = ({ isOpen, onClose, filters, setFilters, onClearAll }) => {
     const specializations = [
-        'General Physician', 'Cardiologist', 'Dermatologist', 'Gynecologist',
-        'Pediatrician', 'Psychiatrist', 'Orthopedic', 'Neurologist', 'Dentist'
+        'General Physician', 'Cardiologist', 'Neurologist', 'Pulmonologist',
+        'Gastroenterologist', 'Nephrologist', 'Endocrinologist', 'Rheumatologist',
+        'Hepatologist', 'Dermatologist', 'Orthopedic', 'Psychiatrist', 'Dentist',
+        'Gynecologist', 'Obstetrician', 'OB-GYN', 'Reproductive Medicine Specialist',
+        'Fertility Specialist', 'Pediatrician', 'Neonatologist', 'Geriatric Medicine Specialist'
     ];
 
     const genders = ['Any', 'Male', 'Female'];
@@ -70,8 +73,8 @@ const FilterDrawer = ({ isOpen, onClose, filters, setFilters, onClearAll }) => {
                                             key={spec}
                                             onClick={() => handleMultiSelect('specialization', spec)}
                                             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${(filters.specialization || []).includes(spec)
-                                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
-                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
+                                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
                                                 }`}
                                         >
                                             {spec}
@@ -89,8 +92,8 @@ const FilterDrawer = ({ isOpen, onClose, filters, setFilters, onClearAll }) => {
                                             key={gender}
                                             onClick={() => handleSingleSelect('gender', gender)}
                                             className={`px-4 py-3 rounded-xl text-xs font-bold transition-all ${filters.gender === gender
-                                                    ? 'bg-slate-900 text-white shadow-lg'
-                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                ? 'bg-slate-900 text-white shadow-lg'
+                                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
                                                 }`}
                                         >
                                             {gender}
@@ -108,8 +111,8 @@ const FilterDrawer = ({ isOpen, onClose, filters, setFilters, onClearAll }) => {
                                             key={rating}
                                             onClick={() => handleSingleSelect('rating', rating)}
                                             className={`px-4 py-3 rounded-xl text-xs font-bold transition-all ${filters.rating === rating
-                                                    ? 'bg-slate-900 text-white shadow-lg'
-                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                ? 'bg-slate-900 text-white shadow-lg'
+                                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
                                                 }`}
                                         >
                                             {rating}
@@ -127,8 +130,8 @@ const FilterDrawer = ({ isOpen, onClose, filters, setFilters, onClearAll }) => {
                                             key={avail}
                                             onClick={() => handleSingleSelect('availability', avail)}
                                             className={`px-4 py-3 rounded-xl text-xs font-bold transition-all ${filters.availability === avail
-                                                    ? 'bg-slate-900 text-white shadow-lg'
-                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                ? 'bg-slate-900 text-white shadow-lg'
+                                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
                                                 }`}
                                         >
                                             {avail}
@@ -146,8 +149,8 @@ const FilterDrawer = ({ isOpen, onClose, filters, setFilters, onClearAll }) => {
                                             key={exp}
                                             onClick={() => handleSingleSelect('experience', exp)}
                                             className={`px-4 py-3 rounded-xl text-xs font-bold transition-all ${filters.experience === exp
-                                                    ? 'bg-slate-900 text-white shadow-lg'
-                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                ? 'bg-slate-900 text-white shadow-lg'
+                                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
                                                 }`}
                                         >
                                             {exp}
@@ -165,8 +168,8 @@ const FilterDrawer = ({ isOpen, onClose, filters, setFilters, onClearAll }) => {
                                             key={fee}
                                             onClick={() => handleSingleSelect('fee', fee)}
                                             className={`px-4 py-3 rounded-xl text-xs font-bold transition-all ${filters.fee === fee
-                                                    ? 'bg-slate-900 text-white shadow-lg'
-                                                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
+                                                ? 'bg-slate-900 text-white shadow-lg'
+                                                : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-transparent'
                                                 }`}
                                         >
                                             {fee}
