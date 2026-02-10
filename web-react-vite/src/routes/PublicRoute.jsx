@@ -32,15 +32,7 @@ const PublicRoute = ({ children }) => {
 
   // 🔑 IMPORTANT FIX:
   // If user is logged out and still on auth pages → go to landing page
-  if (!user && (
-    location.pathname === '/login' ||
-    location.pathname === '/admin/login' ||
-    location.pathname === '/doctor/login' ||
-    location.pathname === '/patient/login' ||
-    location.pathname === '/register'
-  )) {
-    return <Navigate to="/" replace />;
-  }
+ 
 
   return children;
 };
