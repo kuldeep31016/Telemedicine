@@ -149,8 +149,28 @@ const Register = () => {
                     { value: "", label: "Select Specialty", disabled: true },
                     { value: "General Physician", label: "General Physician" },
                     { value: "Cardiologist", label: "Cardiologist" },
+                    { value: "Neurologist", label: "Neurologist" },
+                    { value: "Pulmonologist", label: "Pulmonologist (Chest Specialist)" },
+                    { value: "Gastroenterologist", label: "Gastroenterologist" },
+                    { value: "Nephrologist", label: "Nephrologist" },
+                    { value: "Endocrinologist", label: "Endocrinologist" },
+                    { value: "Rheumatologist", label: "Rheumatologist" },
+                    { value: "Hepatologist", label: "Hepatologist" },
+                    
                     { value: "Dermatologist", label: "Dermatologist" },
+                    { value: "Orthopedic", label: "Orthopedic" },
                     { value: "Psychiatrist", label: "Psychiatrist" },
+                    { value: "Dentist", label: "Dentist" },
+                    
+                    { value: "Gynecologist", label: "Gynecologist" },
+                    { value: "Obstetrician", label: "Obstetrician" },
+                    { value: "OB-GYN", label: "Gynecology & Obstetrics (OB-GYN)" },
+                    { value: "Reproductive Medicine Specialist", label: "Reproductive Medicine Specialist" },
+                    { value: "Fertility Specialist", label: "Fertility Specialist" },
+                    
+                    { value: "Pediatrician", label: "Pediatrician" },
+                    { value: "Neonatologist", label: "Neonatologist" },
+                    { value: "Geriatric Medicine Specialist", label: "Geriatric Medicine Specialist" },
                   ]}
                 />
                 <AuthInput
