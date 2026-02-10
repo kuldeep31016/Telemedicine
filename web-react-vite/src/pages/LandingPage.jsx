@@ -31,19 +31,19 @@ import useAuthStore from '../store/authStore';
 const LandingPage = () => {
   const navigate = useNavigate();
   const { register, login, loading } = useAuthStore();
-  
+
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showDoctorModal, setShowDoctorModal] = useState(false);
   const [adminMode, setAdminMode] = useState('login'); // 'login' or 'register'
   const [doctorMode, setDoctorMode] = useState('login'); // 'login' or 'register'
-  
+
   const [adminForm, setAdminForm] = useState({
     email: '',
     password: '',
     name: '',
     phone: ''
   });
-  
+
   const [doctorForm, setDoctorForm] = useState({
     email: '',
     password: '',
@@ -62,26 +62,26 @@ const LandingPage = () => {
           phone: adminForm.phone,
           role: 'admin'
         });
-        
+
         console.log('[LandingPage] Admin registration successful:', userData);
-        
+
         // Close modal first
         setShowAdminModal(false);
         setAdminMode('login');
         setAdminForm({ email: '', password: '', name: '', phone: '' });
-        
+
         // Navigate immediately - auth state is already updated
         navigate('/admin/dashboard', { replace: true });
       } else {
         const userData = await login(adminForm.email, adminForm.password);
-        
+
         console.log('[LandingPage] Admin login successful:', userData);
-        
+
         // Close modal
         setShowAdminModal(false);
         setAdminMode('login');
         setAdminForm({ email: '', password: '', name: '', phone: '' });
-        
+
         // Navigate based on user role
         if (userData && userData.role === 'admin') {
           navigate('/admin/dashboard', { replace: true });
@@ -115,26 +115,26 @@ const LandingPage = () => {
           licenseNumber: doctorForm.licenseNumber,
           role: 'doctor'
         });
-        
+
         console.log('[LandingPage] Doctor registration successful:', userData);
-        
+
         // Close modal first
         setShowDoctorModal(false);
         setDoctorMode('login');
         setDoctorForm({ email: '', password: '', name: '', phone: '', specialization: '', licenseNumber: '' });
-        
+
         // Navigate immediately
         navigate('/doctor/dashboard', { replace: true });
       } else {
         const userData = await login(doctorForm.email, doctorForm.password);
-        
+
         console.log('[LandingPage] Doctor login successful:', userData);
-        
+
         // Close modal
         setShowDoctorModal(false);
         setDoctorMode('login');
         setDoctorForm({ email: '', password: '', name: '', phone: '', specialization: '', licenseNumber: '' });
-        
+
         // Navigate based on user role
         if (userData && userData.role === 'doctor') {
           navigate('/doctor/dashboard', { replace: true });
@@ -335,7 +335,7 @@ const LandingPage = () => {
 
       {/* Partners/Trust Section */}
       <section class="py-20 px-10 mt-10 relative z-0">
-         <div className="max-w-[1440px] mx-auto">
+        <div className="max-w-[1440px] mx-auto">
           <p className="text-center text-gray-400 font-bold uppercase tracking-[0.2em] mb-12">Trusted by 5000+ medical institutions globally</p>
           <div className="flex flex-wrap justify-between items-center opacity-30 grayscale gap-10">
             <span className="text-4xl font-extrabold italic">MedicalHub</span>
@@ -410,11 +410,11 @@ const LandingPage = () => {
       >
         <form onSubmit={handleAdminSubmit} className="space-y-6">
           <p className="text-gray-600">
-            {adminMode === 'login' 
+            {adminMode === 'login'
               ? 'Please verify your credentials to access the admin portal.'
               : 'Register as a new administrator.'}
           </p>
-          
+
           <div className="space-y-4">
             {adminMode === 'register' && (
               <div>
@@ -431,7 +431,7 @@ const LandingPage = () => {
                 />
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Admin Email
@@ -461,7 +461,7 @@ const LandingPage = () => {
                 />
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Password
@@ -529,11 +529,11 @@ const LandingPage = () => {
       >
         <form onSubmit={handleDoctorSubmit} className="space-y-6">
           <p className="text-gray-600">
-            {doctorMode === 'login' 
+            {doctorMode === 'login'
               ? 'Please verify your credentials to access the doctor portal.'
               : 'Register as a new doctor.'}
           </p>
-          
+
           <div className="space-y-4">
             {doctorMode === 'register' && (
               <>
@@ -555,14 +555,44 @@ const LandingPage = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Specialization
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={doctorForm.specialization}
                     onChange={(e) => setDoctorForm({ ...doctorForm, specialization: e.target.value })}
-                    placeholder="e.g., Cardiologist, Pediatrician"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#6C5DD3] focus:outline-none transition-colors"
-                  />
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#6C5DD3] focus:outline-none transition-colors bg-white appearance-none cursor-pointer"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center' }}
+                  >
+                    <option value="" disabled>Select Specialization</option>
+                   
+                      <option value="General Physician">General Physician</option>
+                      <option value="Cardiologist">Cardiologist</option>
+                      <option value="Neurologist">Neurologist</option>
+                      <option value="Pulmonologist">Pulmonologist (Chest Specialist)</option>
+                      <option value="Gastroenterologist">Gastroenterologist</option>
+                      <option value="Nephrologist">Nephrologist</option>
+                      <option value="Endocrinologist">Endocrinologist</option>
+                      <option value="Rheumatologist">Rheumatologist</option>
+                      <option value="Hepatologist">Hepatologist</option>
+                    
+                    
+                      <option value="Dermatologist">Dermatologist</option>
+                      <option value="Orthopedic">Orthopedic</option>
+                      <option value="Psychiatrist">Psychiatrist</option>
+                      <option value="Dentist">Dentist</option>
+                    
+                    
+                      <option value="Gynecologist">Gynecologist</option>
+                      <option value="Obstetrician">Obstetrician</option>
+                      <option value="OB-GYN">Gynecology & Obstetrics (OB-GYN)</option>
+                      <option value="Reproductive Medicine Specialist">Reproductive Medicine Specialist</option>
+                      <option value="Fertility Specialist">Fertility Specialist</option>
+                    
+                    
+                      <option value="Pediatrician">Pediatrician</option>
+                      <option value="Neonatologist">Neonatologist</option>
+                      <option value="Geriatric Medicine Specialist">Geriatric Medicine Specialist</option>
+                    
+                  </select>
                 </div>
 
                 <div>
@@ -580,7 +610,7 @@ const LandingPage = () => {
                 </div>
               </>
             )}
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Doctor Email
@@ -610,7 +640,7 @@ const LandingPage = () => {
                 />
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Password
