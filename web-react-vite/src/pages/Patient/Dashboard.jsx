@@ -64,73 +64,63 @@ const PatientDashboard = () => {
     fetchDoctors();
   }, []);
 
+  // Debounced API search when searchQuery or filters change
   useEffect(() => {
-    applyFilters();
-  }, [doctors, searchQuery, filters]);
+    const debounceTimer = setTimeout(() => {
+      fetchDoctors();
+    }, 400);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, filters]);
 
   const fetchDoctors = async () => {
     try {
       setLoading(true);
-      const response = await patientAPI.getDoctors();
-      setDoctors(response.data || []);
+
+      // Build query params for API
+      const params = {};
+      if (searchQuery) params.search = searchQuery;
+      if (filters.specialization.length === 1) params.specialization = filters.specialization[0];
+      if (filters.gender !== 'Any') params.gender = filters.gender;
+      if (filters.rating === '4+ & above') params.minRating = 4;
+      else if (filters.rating === '4.5+ & above') params.minRating = 4.5;
+      else if (filters.rating === '3+ & above') params.minRating = 3;
+
+      if (filters.experience === '0-5 years') { params.minExperience = 0; params.maxExperience = 5; }
+      else if (filters.experience === '5-10 years') { params.minExperience = 5; params.maxExperience = 10; }
+      else if (filters.experience === '10+ years') { params.minExperience = 10; }
+
+      if (filters.fee === '₹0 - ₹500') { params.minFee = 0; params.maxFee = 500; }
+      else if (filters.fee === '₹500 - ₹1000') { params.minFee = 500; params.maxFee = 1000; }
+      else if (filters.fee === '₹1000+') { params.minFee = 1000; }
+
+      console.log('[Dashboard] Fetching doctors with params:', params);
+      const response = await patientAPI.getDoctors(params);
+      let result = response.data || [];
+
+      // Client-side filters for specialization (multi-select) and language
+      if (filters.specialization.length > 1) {
+        result = result.filter(doc => filters.specialization.includes(doc.specialization));
+      }
+
+      // Sort: available today first, then by rating, then by fee
+      result.sort((a, b) => {
+        const aAvail = (a.availability || '').toLowerCase().includes('now') || (a.availability || '').toLowerCase().includes('today') ? 0 : 1;
+        const bAvail = (b.availability || '').toLowerCase().includes('now') || (b.availability || '').toLowerCase().includes('today') ? 0 : 1;
+        if (aAvail !== bAvail) return aAvail - bAvail;
+        const aRating = a.rating || 4.5;
+        const bRating = b.rating || 4.5;
+        if (aRating !== bRating) return bRating - aRating;
+        return (a.hourlyRate || 500) - (b.hourlyRate || 500);
+      });
+
+      setDoctors(result);
+      setFilteredDoctors(result);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching doctors:', error);
       toast.error('Failed to load doctors');
       setLoading(false);
     }
-  };
-
-  const applyFilters = () => {
-    let result = [...doctors];
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(doc => 
-        (doc.name || '').toLowerCase().includes(query) ||
-        (doc.specialization || '').toLowerCase().includes(query) ||
-        (doc.hospitalName || '').toLowerCase().includes(query)
-      );
-    }
-
-    if (filters.specialization.length > 0) {
-      result = result.filter(doc => filters.specialization.includes(doc.specialization));
-    }
-
-    if (filters.gender !== 'Any') {
-      result = result.filter(doc => (doc.gender || '').toLowerCase() === filters.gender.toLowerCase());
-    }
-
-    if (filters.rating !== 'Any') {
-      const minRating = filters.rating === '4+ & above' ? 4 : (filters.rating === '4.5+ & above' ? 4.5 : 3);
-      result = result.filter(doc => (doc.rating || 4.5) >= minRating);
-    }
-
-    if (filters.experience !== 'Any') {
-      if (filters.experience === '0-5 years') result = result.filter(doc => (doc.experience || 0) <= 5);
-      else if (filters.experience === '5-10 years') result = result.filter(doc => (doc.experience || 0) > 5 && (doc.experience || 0) <= 10);
-      else if (filters.experience === '10+ years') result = result.filter(doc => (doc.experience || 0) > 10);
-    }
-
-    if (filters.fee !== 'Any') {
-      if (filters.fee === '₹0 - ₹500') result = result.filter(doc => (doc.hourlyRate || 0) <= 500);
-      else if (filters.fee === '₹500 - ₹1000') result = result.filter(doc => (doc.hourlyRate || 0) > 500 && (doc.hourlyRate || 0) <= 1000);
-      else if (filters.fee === '₹1000+') result = result.filter(doc => (doc.hourlyRate || 0) > 1000);
-    }
-
-    result.sort((a, b) => {
-      const aAvail = (a.availability || '').toLowerCase().includes('now') || (a.availability || '').toLowerCase().includes('today') ? 0 : 1;
-      const bAvail = (b.availability || '').toLowerCase().includes('now') || (b.availability || '').toLowerCase().includes('today') ? 0 : 1;
-      if (aAvail !== bAvail) return aAvail - bAvail;
-
-      const aRating = a.rating || 4.5;
-      const bRating = b.rating || 4.5;
-      if (aRating !== bRating) return bRating - aRating;
-
-      return (a.hourlyRate || 500) - (b.hourlyRate || 500);
-    });
-
-    setFilteredDoctors(result);
   };
 
   const handleLogout = async () => {
