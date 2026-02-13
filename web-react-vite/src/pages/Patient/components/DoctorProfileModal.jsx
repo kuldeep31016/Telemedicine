@@ -18,7 +18,7 @@ const DoctorProfileModal = ({ isOpen, onClose, doctor, onBookNow }) => {
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                     <div className="w-40 h-40 rounded-[32px] overflow-hidden bg-purple-50 shadow-inner flex-shrink-0">
                         {doctor.profileImage ? (
-                            <img src={doctor.profileImage} alt={doctor.name} className="w-full h-full object-cover" />
+                            <img src={doctor.profileImage.startsWith('http') ? doctor.profileImage : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}${doctor.profileImage}`} alt={doctor.name} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-purple-200">
                                 <Star size={64} />
