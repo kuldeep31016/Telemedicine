@@ -47,8 +47,8 @@ export const patientAPI = {
    * Get all available doctors
    * @returns {Promise} Doctors list
    */
-  getDoctors: async () => {
-    const response = await api.get('/v1/users?role=doctor');
+  getDoctors: async (params = {}) => {
+    const response = await api.get('/v1/doctors', { params });
     return response.data;
   },
 };
