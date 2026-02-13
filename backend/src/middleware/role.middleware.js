@@ -15,6 +15,45 @@ const authorize = (...allowedRoles) => {
   };
 };
 
+// Check if user is a doctor
+const isDoctor = (req, res, next) => {
+  if (!req.user) {
+    return next(new UnauthorizedError('Authentication required'));
+  }
+  
+  if (req.user.role !== 'doctor') {
+    return next(new ForbiddenError('Access denied. Doctor role required'));
+  }
+  
+  next();
+};
+
+// Check if user is a patient
+const isPatient = (req, res, next) => {
+  if (!req.user) {
+    return next(new UnauthorizedError('Authentication required'));
+  }
+  
+  if (req.user.role !== 'patient') {
+    return next(new ForbiddenError('Access denied. Patient role required'));
+  }
+  
+  next();
+};
+
+// Check if user is an admin
+const isAdmin = (req, res, next) => {
+  if (!req.user) {
+    return next(new UnauthorizedError('Authentication required'));
+  }
+  
+  if (req.user.role !== 'admin') {
+    return next(new ForbiddenError('Access denied. Admin role required'));
+  }
+  
+  next();
+};
+
 // Check if user owns the resource
 const authorizeOwner = (userIdField = 'userId') => {
   return (req, res, next) => {
@@ -38,4 +77,4 @@ const authorizeOwner = (userIdField = 'userId') => {
   };
 };
 
-module.exports = { authorize, authorizeOwner };
+module.exports = { authorize, authorizeOwner, isDoctor, isPatient, isAdmin };
