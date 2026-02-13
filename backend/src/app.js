@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const path = require('path');
 const config = require('./config/env');
 const logger = require('./config/logger');
 const routes = require('./routes');
@@ -52,6 +53,9 @@ if (config.env === 'development') {
     stream: { write: message => logger.info(message.trim()) }
   }));
 }
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // API routes
 app.use('/api', routes);
