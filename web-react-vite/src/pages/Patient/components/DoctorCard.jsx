@@ -39,7 +39,7 @@ const DoctorCard = ({ doctor, onViewProfile, onBookAppointment }) => {
                 <div className="relative flex-shrink-0">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100">
                         {profileImage ? (
-                            <img src={profileImage} alt={name} className="w-full h-full object-cover" />
+                            <img src={profileImage.startsWith('http') ? profileImage : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}${profileImage}`} alt={name} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-300">
                                 <User size={32} />
