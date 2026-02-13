@@ -1,8 +1,9 @@
 const dotenv = require('dotenv');
 const Joi = require('joi');
+const path = require('path');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from backend/.env
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 // Environment validation schema
 const envSchema = Joi.object({
