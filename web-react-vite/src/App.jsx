@@ -23,6 +23,7 @@ import DoctorsManagement from './pages/Admin/DoctorsManagement';
 import DoctorProfile from './pages/Admin/DoctorProfile';
 import PatientsManagement from './pages/Admin/PatientsManagement';
 import DoctorDashboard from './pages/Doctor/Dashboard';
+import DoctorProfilePage from './pages/Doctor/Profile';
 import PatientDashboard from './pages/Patient/Dashboard';
 
 // Components
@@ -130,6 +131,11 @@ function App() {
         <Route path="/doctor/dashboard" element={
           <ProtectedRoute allowedRoles={['doctor']}>
             <DoctorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/doctor/profile" element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorProfilePage />
           </ProtectedRoute>
         } />
 
