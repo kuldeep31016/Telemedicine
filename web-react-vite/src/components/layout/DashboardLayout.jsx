@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -18,7 +18,12 @@ import {
   Badge as MuiBadge,
   useTheme,
   useMediaQuery,
-  Button
+  Button,
+  Paper,
+  ClickAwayListener,
+  Popper,
+  MenuList,
+  MenuItem
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -29,7 +34,9 @@ import {
   Dashboard,
   People,
   VideoCall,
-  Assignment
+  Assignment,
+  Person,
+  Edit
 } from '@mui/icons-material';
 import useAuthStore from '../../store/authStore';
 
@@ -42,6 +49,8 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [open, setOpen] = useState(!isMobile);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const avatarRef = useRef(null);
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -203,15 +212,70 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
               </Typography>
             </Box>
             <Avatar
+              ref={avatarRef}
+              onClick={() => setProfileMenuOpen((prev) => !prev)}
               sx={{
                 width: 35,
                 height: 35,
                 background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                '&:hover': { boxShadow: '0 0 0 3px rgba(37,99,235,0.3)' }
               }}
             >
               {user?.name?.charAt(0).toUpperCase()}
             </Avatar>
+
+            {/* Profile Dropdown Menu */}
+            <Popper
+              open={profileMenuOpen}
+              anchorEl={avatarRef.current}
+              placement="bottom-end"
+              sx={{ zIndex: 1300 }}
+            >
+              <ClickAwayListener onClickAway={() => setProfileMenuOpen(false)}>
+                <Paper
+                  elevation={8}
+                  sx={{
+                    mt: 1,
+                    borderRadius: 2,
+                    minWidth: 200,
+                    overflow: 'hidden',
+                    border: '1px solid #e2e8f0'
+                  }}
+                >
+                  {/* User Info Header */}
+                  <Box sx={{ px: 2, py: 1.5, bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <Typography variant="subtitle2" fontWeight="bold">{user?.name}</Typography>
+                    <Typography variant="caption" color="textSecondary">{user?.email}</Typography>
+                  </Box>
+                  <MenuList sx={{ py: 0.5 }}>
+                    {(user?.role === 'doctor') && (
+                      <MenuItem
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          navigate('/doctor/profile');
+                        }}
+                        sx={{ py: 1.5, gap: 1.5, fontSize: '0.9rem' }}
+                      >
+                        <Edit fontSize="small" sx={{ color: '#2563eb' }} />
+                        Edit Profile
+                      </MenuItem>
+                    )}
+                    <Divider />
+                    <MenuItem
+                      onClick={() => {
+                        setProfileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      sx={{ py: 1.5, gap: 1.5, fontSize: '0.9rem', color: '#ef4444' }}
+                    >
+                      <LogOut fontSize="small" />
+                      Logout
+                    </MenuItem>
+                  </MenuList>
+                </Paper>
+              </ClickAwayListener>
+            </Popper>
           </Box>
         </Toolbar>
       </AppBar>
