@@ -2,7 +2,8 @@ const Doctor = require('../models/Doctor');
 const { successResponse } = require('../utils/response.util');
 const { ValidationError, NotFoundError } = require('../utils/error.util');
 const logger = require('../config/logger');
-const fs = require('fs');
+const { s3Client, S3_BUCKET } = require('../config/s3');
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const path = require('path');
 
 class DoctorController {
@@ -187,7 +188,7 @@ class DoctorController {
     }
 
     /**
-     * Upload doctor profile image
+     * Upload doctor profile image to S3
      */
     async uploadProfileImage(req, res, next) {
         try {
@@ -196,15 +197,31 @@ class DoctorController {
             }
 
             const userId = req.user._id;
-            const imageUrl = `/uploads/doctors/${req.file.filename}`;
+            const ext = path.extname(req.file.originalname);
+            const key = `doctors/${userId}_${Date.now()}${ext}`;
 
-            // Delete old profile image if exists
+            // Upload to S3
+            const putCommand = new PutObjectCommand({
+                Bucket: S3_BUCKET,
+                Key: key,
+                Body: req.file.buffer,
+                ContentType: req.file.mimetype,
+            });
+            await s3Client.send(putCommand);
+
+            const imageUrl = `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+            // Delete old S3 image if exists
             const doctor = await Doctor.findById(userId);
-            if (doctor && doctor.profileImage) {
-                const oldPath = path.join(__dirname, '..', '..', doctor.profileImage);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                    logger.info(`Deleted old profile image: ${doctor.profileImage}`);
+            if (doctor && doctor.profileImage && doctor.profileImage.includes(S3_BUCKET)) {
+                try {
+                    const oldKey = doctor.profileImage.split('.amazonaws.com/')[1];
+                    if (oldKey) {
+                        await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: oldKey }));
+                        logger.info(`Deleted old S3 image: ${oldKey}`);
+                    }
+                } catch (delErr) {
+                    logger.warn('Failed to delete old S3 image:', delErr.message);
                 }
             }
 
@@ -219,7 +236,7 @@ class DoctorController {
                 throw new NotFoundError('Doctor profile not found');
             }
 
-            logger.info(`Uploaded profile image for doctor: ${updatedDoctor.name}`);
+            logger.info(`Uploaded S3 profile image for doctor: ${updatedDoctor.name}`);
             return successResponse(res, updatedDoctor, 'Profile image uploaded successfully');
         } catch (error) {
             logger.error('Error uploading profile image:', error);
