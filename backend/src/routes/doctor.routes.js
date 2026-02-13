@@ -1,26 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const doctorController = require('../controllers/doctor.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 const { isDoctor } = require('../middleware/role.middleware');
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'doctors');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Multer config for profile image upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueName = `doctor_${req.user._id}_${Date.now()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  }
-});
+// Multer config – memory storage for S3 upload
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
