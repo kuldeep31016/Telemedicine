@@ -24,7 +24,7 @@ import {
 import toast from 'react-hot-toast';
 
 // Import local assets
-import heroImage from '../assets/happy-doctor-holding-clipboard-with-patients.jpg';
+import heroImage from '../assets/image.png';
 import Modal from '../components/common/Modal';
 import useAuthStore from '../store/authStore';
 
