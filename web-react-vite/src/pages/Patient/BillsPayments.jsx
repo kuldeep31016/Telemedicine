@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   CreditCard, 
@@ -9,65 +9,77 @@ import {
   Calendar,
   Receipt,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
+import { patientAPI } from '../../api';
+import toast from 'react-hot-toast';
+import useAuthStore from '../../store/authStore';
+import { generatePaymentReceipt, generateInvoiceNumber, formatInvoiceDate } from '../../utils/pdfGenerator';
 
 const BillsPayments = () => {
   const [activeTab, setActiveTab] = useState('all');
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore();
 
-  // Mock data - replace with API calls
-  const payments = [
-    {
-      id: 'INV001234',
-      doctor: 'Dr. Dhwani Bhanusali',
-      service: 'General Consultation',
-      date: 'April 26, 2026',
-      amount: 500,
-      status: 'pending',
-      dueDate: 'May 1, 2026',
-      paymentMethod: null
-    },
-    {
-      id: 'INV001235',
-      doctor: 'Dr. Rakhi Singh',
-      service: 'Follow-up Consultation',
-      date: 'April 28, 2026',
-      amount: 500,
-      status: 'pending',
-      dueDate: 'May 3, 2026',
-      paymentMethod: null
-    },
-    {
-      id: 'INV001230',
-      doctor: 'Dr. Aditya Sharma',
-      service: 'Video Consultation',
-      date: 'April 10, 2026',
-      amount: 800,
-      status: 'paid',
-      paidDate: 'April 10, 2026',
-      paymentMethod: 'Credit Card'
-    },
-    {
-      id: 'INV001231',
-      doctor: 'Dr. Priya Patel',
-      service: 'Skin Treatment',
-      date: 'April 5, 2026',
-      amount: 600,
-      status: 'paid',
-      paidDate: 'April 5, 2026',
-      paymentMethod: 'UPI'
-    },
-    {
-      id: 'INV001229',
-      doctor: 'Dr. Rajesh Kumar',
-      service: 'Orthopedic Consultation',
-      date: 'April 15, 2026',
-      amount: 700,
-      status: 'refunded',
-      refundDate: 'April 16, 2026',
-      refundReason: 'Appointment cancelled'
+  // Fetch appointments on component mount
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const response = await patientAPI.getAppointments();
+      // Handle nested response structure: response.data.data.appointments
+      const appointmentsData = response.data?.data?.appointments || response.data?.appointments || response.data || [];
+      console.log('[BillsPayments] Fetched appointments:', appointmentsData);
+      setAppointments(Array.isArray(appointmentsData) ? appointmentsData : []);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast.error('Failed to load payment history');
+      setAppointments([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Transform appointments to payment format
+  const payments = Array.isArray(appointments) ? appointments.map(apt => {
+    const doctor = apt.doctorId || {};
+    const appointmentDate = new Date(apt.appointmentDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Determine payment status: if appointment is cancelled and was paid, show as refunded
+    let paymentStatus = apt.paymentStatus;
+    if (apt.status === 'cancelled' && apt.paymentStatus === 'paid') {
+      paymentStatus = 'refunded';
+    }
+
+    return {
+      id: generateInvoiceNumber(apt._id),
+      appointmentId: apt._id,
+      doctor: doctor.name ? `Dr. ${doctor.name.replace(/^Dr\.?\s*/i, '')}` : 'Unknown Doctor',
+      doctorData: doctor,
+      service: apt.consultationType === 'video' ? 'Video Consultation' : 'In-Person Consultation',
+      date: appointmentDate,
+      time: apt.appointmentTime,
+      amount: apt.amount,
+      status: paymentStatus,
+      paymentMethod: apt.paymentId ? 'Online Payment' : null,
+      orderId: apt.orderId,
+      paymentId: apt.paymentId,
+      appointmentData: apt,
+      dueDate: apt.paymentStatus === 'pending' ? appointmentDate : null,
+      paidDate: apt.paymentStatus === 'paid' && apt.status !== 'cancelled' ? appointmentDate : null,
+      refundDate: paymentStatus === 'refunded' ? (apt.cancelledAt ? new Date(apt.cancelledAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : appointmentDate) : null,
+      refundReason: apt.status === 'cancelled' ? apt.cancellationReason || 'Appointment cancelled' : null
+    };
+  }) : [];
 
   const tabs = [
     { id: 'all', label: 'All' },
@@ -123,11 +135,48 @@ const BillsPayments = () => {
   const handlePayNow = (paymentId) => {
     console.log('Pay now:', paymentId);
     // Implement payment logic
+    toast.error('Payment feature coming soon!');
   };
 
-  const handleDownloadInvoice = (paymentId) => {
-    console.log('Download invoice:', paymentId);
-    // Implement download logic
+  const handleDownloadInvoice = (payment) => {
+    try {
+      // Allow download for paid and refunded appointments (refunded means it was paid before cancellation)
+      if (payment.status !== 'paid' && payment.status !== 'refunded') {
+        toast.error('Receipt is only available for paid appointments');
+        return;
+      }
+
+      // Prepare data for PDF generation
+      const pdfData = {
+        appointment: {
+          orderId: payment.orderId,
+          paymentId: payment.paymentId,
+          consultationType: payment.appointmentData.consultationType,
+          appointmentDate: payment.appointmentData.appointmentDate,
+          appointmentTime: payment.time,
+          amount: payment.amount
+        },
+        patient: {
+          name: user?.name || 'Patient',
+          email: user?.email || 'N/A',
+          phone: user?.phone || 'N/A'
+        },
+        doctor: {
+          name: payment.doctor,
+          specialization: payment.doctorData?.specialization || 'N/A',
+          email: payment.doctorData?.email || 'N/A'
+        },
+        invoiceNumber: payment.id,
+        invoiceDate: formatInvoiceDate(new Date())
+      };
+
+      // Generate PDF
+      generatePaymentReceipt(pdfData);
+      toast.success('Receipt downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download receipt');
+    }
   };
 
   return (
@@ -138,8 +187,14 @@ const BillsPayments = () => {
         <p className="text-slate-500 font-medium">Manage your payment history, pending bills, and invoices.</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -280,9 +335,14 @@ const BillsPayments = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleDownloadInvoice(payment.id)}
-                        className="p-3 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 transition-colors"
-                        title="Download Invoice"
+                        onClick={() => handleDownloadInvoice(payment)}
+                        className={`p-3 rounded-xl transition-colors ${
+                          payment.status === 'paid' || payment.status === 'refunded'
+                            ? 'bg-slate-50 text-slate-600 hover:bg-slate-100 cursor-pointer' 
+                            : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                        }`}
+                        title={(payment.status === 'paid' || payment.status === 'refunded') ? 'Download Receipt' : 'Receipt only available for paid appointments'}
+                        disabled={payment.status !== 'paid' && payment.status !== 'refunded'}
                       >
                         <Download className="w-5 h-5" />
                       </button>
@@ -302,6 +362,8 @@ const BillsPayments = () => {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };
