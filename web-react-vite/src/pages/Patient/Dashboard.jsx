@@ -2,16 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-  Calendar, 
-  AlertCircle, 
-  ArrowRight,
   TrendingUp,
-  Clock,
   User,
   Heart,
-  Video,
   X,
-  Plus,
   Bell,
   LogOut
 } from 'lucide-react';
@@ -46,19 +40,6 @@ const PatientDashboard = () => {
     fee: 'Any',
     language: []
   });
-
-  const [upcomingAppointments] = useState([
-    {
-      id: 1,
-      doctorName: 'Dr. Sarah Johnson',
-      specialty: 'Cardiologist',
-      hospital: 'CarePlus Hospital',
-      date: 'Tue, Apr 25',
-      time: '4:30 PM',
-      type: 'Video Consultation',
-      image: 'https://images.unsplash.com/photo-1559839734-2b71f1536783?auto=format&fit=crop&q=80&w=200'
-    }
-  ]);
 
   useEffect(() => {
     fetchDoctors();
@@ -224,7 +205,7 @@ const PatientDashboard = () => {
         </div>
       </nav>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full px-8 py-10 flex flex-col lg:flex-row gap-10">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-8 py-10">
         {/* Left Column: Doctor Discovery */}
         <div className="flex-1 space-y-10">
           <div>
@@ -277,8 +258,8 @@ const PatientDashboard = () => {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[1, 2, 3, 4].map(i => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
                   <div key={i} className="bg-white rounded-[24px] p-6 h-64 border border-slate-100 animate-pulse">
                     <div className="flex gap-4 mb-4">
                       <div className="w-16 h-16 rounded-xl bg-slate-50" />
@@ -295,7 +276,7 @@ const PatientDashboard = () => {
                 ))}
               </div>
             ) : filteredDoctors.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                  {filteredDoctors.map(doctor => (
                    <DoctorCard 
                      key={doctor._id} 
@@ -323,72 +304,8 @@ const PatientDashboard = () => {
           </div>
         </div>
 
-        {/* Right Column: Widgets */}
-        <aside className="w-full lg:w-80 space-y-8">
-          {/* Upcoming Appointment Widget */}
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-slate-100 space-y-6">
-            <div className="flex items-center justify-between">
-               <h3 className="text-lg font-black text-slate-900">Upcoming Appointments</h3>
-               <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-full uppercase">{upcomingAppointments.length} found</span>
-            </div>
 
-            <div className="space-y-4">
-               {upcomingAppointments.map((app) => (
-                 <div key={app.id} className="p-4 bg-slate-50/50 rounded-[24px] border border-slate-50 space-y-4">
-                    <div className="flex gap-3">
-                       <img src={app.image} className="w-12 h-12 rounded-xl object-cover" />
-                       <div className="min-w-0">
-                          <p className="text-sm font-black text-slate-900 truncate">{app.doctorName}</p>
-                          <p className="text-[11px] font-bold text-blue-600 mb-0.5">{app.specialty}</p>
-                          <p className="text-[10px] font-medium text-slate-400">{app.hospital}</p>
-                       </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                       <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                          <Calendar size={14} className="text-slate-400" />
-                          {app.date}, {app.time}
-                       </div>
-                       <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                          <Video size={14} className="text-slate-400" />
-                          {app.type}
-                       </div>
-                    </div>
-
-                    <button className="w-full py-3 bg-blue-600 text-white text-xs font-black rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-100 active:scale-95">
-                       <Video size={14} />
-                       Join Video Call
-                    </button>
-                 </div>
-               ))}
-            </div>
-          </div>
-
-          {/* Emergency Alert Card */}
-          <div className="bg-red-50 rounded-[32px] p-6 border border-red-100 space-y-4 overflow-hidden relative group">
-             <div className="absolute -top-10 -right-10 w-32 h-32 bg-red-100 rounded-full blur-3xl group-hover:bg-red-200 transition-colors"></div>
-             <div className="w-12 h-12 bg-red-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-200 relative z-10">
-                <AlertCircle size={24} />
-             </div>
-             <div className="relative z-10">
-                <h4 className="text-lg font-black text-red-900">Emergency SOS</h4>
-                <p className="text-xs font-bold text-red-600">Instant connection to nearest ambulance and emergency services</p>
-             </div>
-             <button className="w-full py-4 bg-red-500 text-white text-sm font-black rounded-xl flex items-center justify-center gap-2 relative z-10 hover:bg-red-600 transition-all active:scale-95">
-                Call Now
-             </button>
-          </div>
-        </aside>
       </main>
-
-      {/* Floating SOS for mobile or quick access */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-red-500 text-white rounded-full shadow-2xl flex items-center justify-center lg:hidden z-50 border-4 border-white"
-      >
-        <AlertCircle size={32} />
-      </motion.button>
 
       {/* Modals & Drawer */}
       <FilterDrawer 
