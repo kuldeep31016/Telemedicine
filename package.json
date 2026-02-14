@@ -8,5 +8,9 @@
     },
     "devDependencies": {
         "concurrently": "^8.2.2"
+    },
+    "dependencies": {
+        "jspdf": "^4.1.0",
+        "jspdf-autotable": "^5.0.7"
     }
 }
