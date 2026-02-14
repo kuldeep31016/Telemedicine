@@ -16,11 +16,24 @@ export const patientAPI = {
 
   /**
    * Get appointments
-   * @param {Object} params - Query parameters
+   * @param {Object} params - Query parameters (status, startDate, endDate, page, limit)
    * @returns {Promise} Appointments list
    */
   getAppointments: async (params = {}) => {
-    const response = await api.get('/v1/patient/appointments', { params });
+    const response = await api.get('/v1/appointments', { params });
+    return response.data;
+  },
+
+  /**
+   * Cancel appointment
+   * @param {String} appointmentId - Appointment ID
+   * @param {String} reason - Cancellation reason
+   * @returns {Promise} Cancelled appointment
+   */
+  cancelAppointment: async (appointmentId, reason) => {
+    const response = await api.put(`/v1/appointments/${appointmentId}/cancel`, {
+      cancellationReason: reason
+    });
     return response.data;
   },
 
