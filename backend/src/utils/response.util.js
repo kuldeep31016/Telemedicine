@@ -37,8 +37,32 @@ const paginatedResponse = (res, data, page, limit, total, message = 'Success') =
   });
 };
 
+// Helper functions that return response objects (not sent directly)
+const createSuccessResponse = (data = null, message = 'Success') => {
+  return {
+    success: true,
+    message,
+    data
+  };
+};
+
+const createErrorResponse = (message = 'Error occurred', details = null) => {
+  const response = {
+    success: false,
+    message
+  };
+  
+  if (details) {
+    response.details = details;
+  }
+  
+  return response;
+};
+
 module.exports = {
   successResponse,
   errorResponse,
-  paginatedResponse
+  paginatedResponse,
+  createSuccessResponse,
+  createErrorResponse
 };
