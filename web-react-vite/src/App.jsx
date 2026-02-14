@@ -24,7 +24,14 @@ import DoctorProfile from './pages/Admin/DoctorProfile';
 import PatientsManagement from './pages/Admin/PatientsManagement';
 import DoctorDashboard from './pages/Doctor/Dashboard';
 import DoctorProfilePage from './pages/Doctor/Profile';
-import PatientDashboard from './pages/Patient/Dashboard';
+import PatientLayout from './pages/Patient/PatientLayout';
+import DashboardOverview from './pages/Patient/DashboardOverview';
+import FindDoctors from './pages/Patient/FindDoctors';
+import MyAppointments from './pages/Patient/MyAppointments';
+import MedicalRecords from './pages/Patient/MedicalRecords';
+import BillsPayments from './pages/Patient/BillsPayments';
+import MyDoctors from './pages/Patient/MyDoctors';
+import Settings from './pages/Patient/Settings';
 
 // Components
 import Loading from './components/common/Loading';
@@ -140,11 +147,20 @@ function App() {
         } />
 
         {/* Protected Routes - Patient */}
-        <Route path="/patient/dashboard" element={
+        <Route path="/patient" element={
           <ProtectedRoute allowedRoles={['patient']}>
-            <PatientDashboard />
+            <PatientLayout />
           </ProtectedRoute>
-        } />
+        }>
+          <Route path="dashboard" element={<DashboardOverview />} />
+          <Route path="find-doctors" element={<FindDoctors />} />
+          <Route path="appointments" element={<MyAppointments />} />
+          <Route path="medical-records" element={<MedicalRecords />} />
+          <Route path="bills-payments" element={<BillsPayments />} />
+          <Route path="my-doctors" element={<MyDoctors />} />
+          <Route path="settings" element={<Settings />} />
+          <Route index element={<Navigate to="/patient/dashboard" replace />} />
+        </Route>
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
