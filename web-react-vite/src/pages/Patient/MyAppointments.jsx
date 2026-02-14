@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, 
@@ -10,116 +10,155 @@ import {
   X,
   CheckCircle,
   XCircle,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
+import { patientAPI } from '../../api';
+import toast from 'react-hot-toast';
 
 const MyAppointments = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [appointments, setAppointments] = useState({
+    upcoming: [],
+    past: [],
+    cancelled: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [tabCounts, setTabCounts] = useState({
+    upcoming: 0,
+    past: 0,
+    cancelled: 0
+  });
 
-  // Mock data - replace with API calls
-  const appointments = {
-    upcoming: [
-      {
-        id: 'APPT123456',
-        doctor: 'Dr. Dhwani Bhanusali',
-        specialization: 'Nephrologist',
-        hospital: 'City General Hospital',
-        date: 'Wed, April 26, 2026',
-        time: '10:30 AM',
-        type: 'In-Person Appointment',
-        rating: 4.5,
-        reviews: '120+',
-        fee: 500,
-        avatar: 'https://i.pravatar.cc/150?img=5',
-        status: 'confirmed',
-        badge: 'Top Rated'
-      },
-      {
-        id: 'APPT123457',
-        doctor: 'Dr. Rakhi Singh',
-        specialization: 'Gynecologist',
-        hospital: 'City General Hospital',
-        date: 'Fri, April 28, 2026',
-        time: '12:00 PM',
-        type: 'In-Person Appointment',
-        rating: 4.5,
-        reviews: '120+',
-        fee: 500,
-        avatar: 'https://i.pravatar.cc/150?img=10',
-        status: 'confirmed',
-        badge: 'Top Rated'
-      }
-    ],
-    past: [
-      {
-        id: 'APPT123450',
-        doctor: 'Dr. Aditya Sharma',
-        specialization: 'Cardiologist',
-        hospital: 'Medicare Center',
-        date: 'Mon, April 10, 2026',
-        time: '2:00 PM',
-        type: 'Video Consultation',
-        rating: 4.8,
-        reviews: '200+',
-        fee: 800,
-        avatar: 'https://i.pravatar.cc/150?img=12',
-        status: 'completed'
-      },
-      {
-        id: 'APPT123451',
-        doctor: 'Dr. Priya Patel',
-        specialization: 'Dermatologist',
-        hospital: 'Skin Care Clinic',
-        date: 'Wed, April 5, 2026',
-        time: '11:00 AM',
-        type: 'In-Person Appointment',
-        rating: 4.6,
-        reviews: '150+',
-        fee: 600,
-        avatar: 'https://i.pravatar.cc/150?img=9',
-        status: 'completed'
-      }
-    ],
-    cancelled: [
-      {
-        id: 'APPT123449',
-        doctor: 'Dr. Rajesh Kumar',
-        specialization: 'Orthopedic',
-        hospital: 'Bone & Joint Clinic',
-        date: 'Fri, April 15, 2026',
-        time: '3:00 PM',
-        type: 'In-Person Appointment',
-        rating: 4.3,
-        reviews: '90+',
-        fee: 700,
-        avatar: 'https://i.pravatar.cc/150?img=8',
-        status: 'cancelled',
-        cancelReason: 'Cancelled by patient'
-      }
-    ]
+  // Fetch appointments
+  const fetchAppointments = async () => {
+    setLoading(true);
+    try {
+      // Fetch all appointments at once
+      const response = await patientAPI.getAppointments();
+      const allAppointments = response.data?.appointments || [];
+      
+      console.log('Fetched appointments:', allAppointments);
+
+      // Categorize appointments
+      const now = new Date();
+      const categorized = {
+        upcoming: [],
+        past: [],
+        cancelled: []
+      };
+
+      allAppointments.forEach(apt => {
+        const aptDate = new Date(apt.appointmentDate);
+        
+        if (apt.status === 'cancelled') {
+          categorized.cancelled.push(transformAppointment(apt));
+        } else if (apt.status === 'completed' || aptDate < now) {
+          categorized.past.push(transformAppointment(apt, 'completed'));
+        } else {
+          categorized.upcoming.push(transformAppointment(apt));
+        }
+      });
+
+      setAppointments(categorized);
+      setTabCounts({
+        upcoming: categorized.upcoming.length,
+        past: categorized.past.length,
+        cancelled: categorized.cancelled.length
+      });
+    } catch (error) {
+      console.error('Failed to fetch appointments:', error);
+      toast.error('Failed to load appointments');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Transform backend appointment to UI format
+  const transformAppointment = (apt, overrideStatus = null) => {
+    const doctor = apt.doctorId || {};
+    const date = new Date(apt.appointmentDate);
+    
+    // Format date as "Wed, April 26, 2026"
+    const formattedDate = date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // Get doctor profile image URL or placeholder
+    const avatar = doctor.profileImage 
+      ? (doctor.profileImage.startsWith('http') 
+          ? doctor.profileImage 
+          : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}${doctor.profileImage}`)
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=random`;
+
+    return {
+      id: apt._id,
+      refNo: `APPT${apt._id.slice(-6).toUpperCase()}`,
+      doctor: doctor.name || 'Unknown Doctor',
+      specialization: doctor.specialization || 'General Physician',
+      hospital: 'City General Hospital', // From mock - can be added to doctor model
+      date: formattedDate,
+      time: apt.appointmentTime,
+      type: apt.consultationType === 'video' ? 'Video Consultation' : 'In-Person Appointment',
+      rating: 4.5, // From mock - can be calculated from reviews
+      reviews: '120+', // From mock - can be added to doctor model
+      fee: apt.amount,
+      avatar,
+      status: overrideStatus || apt.status,
+      paymentId: apt.paymentId,
+      orderId: apt.orderId,
+      cancelReason: apt.cancellationReason || null,
+      badge: null // Can add based on doctor rating
+    };
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
   const tabs = [
-    { id: 'upcoming', label: 'Upcoming', count: appointments.upcoming.length },
-    { id: 'past', label: 'Past', count: appointments.past.length },
-    { id: 'cancelled', label: 'Cancelled', count: appointments.cancelled.length }
+    { id: 'upcoming', label: 'Upcoming', count: tabCounts.upcoming },
+    { id: 'past', label: 'Past', count: tabCounts.past },
+    { id: 'cancelled', label: 'Cancelled', count: tabCounts.cancelled }
   ];
 
   const currentAppointments = appointments[activeTab] || [];
 
   const handleJoinReschedule = (appointmentId) => {
     console.log('Join/Reschedule:', appointmentId);
-    // Implement join/reschedule logic
+    toast.info('Join/Reschedule feature coming soon!');
+    // TODO: Implement join/reschedule logic
   };
 
-  const handleCancel = (appointmentId) => {
-    console.log('Cancel appointment:', appointmentId);
-    // Implement cancel logic
+  const handleCancel = async (appointmentId) => {
+    if (!confirm('Are you sure you want to cancel this appointment?')) {
+      return;
+    }
+
+    const reason = prompt('Please provide a reason for cancellation (optional):');
+    
+    try {
+      toast.loading('Cancelling appointment...');
+      await patientAPI.cancelAppointment(appointmentId, reason || 'Cancelled by patient');
+      toast.dismiss();
+      toast.success('Appointment cancelled successfully');
+      
+      // Refresh appointments
+      fetchAppointments();
+    } catch (error) {
+      toast.dismiss();
+      console.error('Failed to cancel appointment:', error);
+      toast.error('Failed to cancel appointment');
+    }
   };
 
   const handleDownloadInvoice = (appointmentId) => {
     console.log('Download invoice:', appointmentId);
-    // Implement download logic
+    toast.info('Invoice download feature coming soon!');
+    // TODO: Implement invoice download
   };
 
   const getStatusColor = (status) => {
@@ -193,146 +232,153 @@ const MyAppointments = () => {
 
       {/* Appointments List */}
       <div className="space-y-4">
-        <AnimatePresence mode="wait">
-          {currentAppointments.length > 0 ? (
-            currentAppointments.map((appointment, index) => (
-              <motion.div
-                key={appointment.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all"
-              >
-                <div className="flex items-start gap-4">
-                  {/* Doctor Avatar */}
-                  <img 
-                    src={appointment.avatar} 
-                    alt={appointment.doctor}
-                    className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-100"
-                  />
+        {loading ? (
+          <div className="bg-white rounded-3xl p-20 text-center border border-slate-100">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-slate-500 font-medium">Loading appointments...</p>
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            {currentAppointments.length > 0 ? (
+              currentAppointments.map((appointment, index) => (
+                <motion.div
+                  key={appointment.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Doctor Avatar */}
+                    <img 
+                      src={appointment.avatar} 
+                      alt={appointment.doctor}
+                      className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-100"
+                    />
 
-                  {/* Main Content */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-xl font-black text-slate-900">{appointment.doctor}</h3>
-                          {appointment.badge && (
-                            <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-2 py-1 rounded-md">
-                              ⭐ {appointment.badge}
-                            </span>
+                    {/* Main Content */}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-xl font-black text-slate-900">{appointment.doctor}</h3>
+                            {appointment.badge && (
+                              <span className="bg-orange-100 text-orange-600 text-[10px] font-black px-2 py-1 rounded-md">
+                                ⭐ {appointment.badge}
+                              </span>
+                            )}
+                            {activeTab !== 'upcoming' && (
+                              <span className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold border ${getStatusColor(appointment.status)}`}>
+                                {getStatusIcon(appointment.status)}
+                                {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-blue-600 font-semibold text-sm mb-1">{appointment.specialization}</p>
+                          <div className="flex items-center gap-1 text-slate-500 text-sm">
+                            <MapPin className="w-4 h-4" />
+                            <span>{appointment.hospital}</span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
+                          Ref. No: {appointment.refNo}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Calendar className="w-4 h-4 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 font-medium">Date</p>
+                            <p className="text-sm font-bold text-slate-900">{appointment.date}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 font-medium">Time</p>
+                            <p className="text-sm font-bold text-slate-900">{appointment.time}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Video className="w-4 h-4 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 font-medium">Type</p>
+                            <p className="text-sm font-bold text-slate-900">{appointment.type}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                            <span className="text-sm font-bold text-slate-900">{appointment.rating}</span>
+                            <span className="text-sm text-slate-500">({appointment.reviews} reviews)</span>
+                          </div>
+                          <span className="text-lg font-black text-slate-900">₹ {appointment.fee}</span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3">
+                          {activeTab === 'upcoming' && (
+                            <>
+                              <button 
+                                onClick={() => handleJoinReschedule(appointment.id)}
+                                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                Join/Reschedule
+                              </button>
+                              <button 
+                                onClick={() => handleCancel(appointment.id)}
+                                className="px-6 py-2.5 border-2 border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all"
+                              >
+                                Cancel
+                              </button>
+                            </>
                           )}
-                          {activeTab !== 'upcoming' && (
-                            <span className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold border ${getStatusColor(appointment.status)}`}>
-                              {getStatusIcon(appointment.status)}
-                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-blue-600 font-semibold text-sm mb-1">{appointment.specialization}</p>
-                        <div className="flex items-center gap-1 text-slate-500 text-sm">
-                          <MapPin className="w-4 h-4" />
-                          <span>{appointment.hospital}</span>
-                        </div>
-                      </div>
-                      <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
-                        Ref. No: {appointment.id}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
-                          <Calendar className="w-4 h-4 text-slate-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500 font-medium">Date</p>
-                          <p className="text-sm font-bold text-slate-900">{appointment.date}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
-                          <Clock className="w-4 h-4 text-slate-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500 font-medium">Time</p>
-                          <p className="text-sm font-bold text-slate-900">{appointment.time}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
-                          <Video className="w-4 h-4 text-slate-600" />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500 font-medium">Type</p>
-                          <p className="text-sm font-bold text-slate-900">{appointment.type}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                          <span className="text-sm font-bold text-slate-900">{appointment.rating}</span>
-                          <span className="text-sm text-slate-500">({appointment.reviews} reviews)</span>
-                        </div>
-                        <span className="text-lg font-black text-slate-900">₹ {appointment.fee}</span>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex items-center gap-3">
-                        {activeTab === 'upcoming' && (
-                          <>
+                          {activeTab === 'past' && (
                             <button 
-                              onClick={() => handleJoinReschedule(appointment.id)}
+                              onClick={() => handleDownloadInvoice(appointment.id)}
                               className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
                             >
-                              <RefreshCw className="w-4 h-4" />
-                              Join/Reschedule
+                              <Download className="w-4 h-4" />
+                              Download Invoice
                             </button>
-                            <button 
-                              onClick={() => handleCancel(appointment.id)}
-                              className="px-6 py-2.5 border-2 border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-all"
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        )}
-                        {activeTab === 'past' && (
-                          <button 
-                            onClick={() => handleDownloadInvoice(appointment.id)}
-                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
-                          >
-                            <Download className="w-4 h-4" />
-                            Download Invoice
-                          </button>
-                        )}
-                        {activeTab === 'cancelled' && appointment.cancelReason && (
-                          <span className="text-sm text-slate-500 italic">{appointment.cancelReason}</span>
-                        )}
+                          )}
+                          {activeTab === 'cancelled' && appointment.cancelReason && (
+                            <span className="text-sm text-slate-500 italic">{appointment.cancelReason}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="bg-white rounded-3xl p-20 text-center border border-slate-100"
+              >
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Calendar size={28} className="text-slate-300" />
                 </div>
+                <h3 className="text-xl font-black text-slate-900 mb-2">No {activeTab} appointments</h3>
+                <p className="text-slate-500 font-medium">You don't have any {activeTab} appointments at the moment.</p>
               </motion.div>
-            ))
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="bg-white rounded-3xl p-20 text-center border border-slate-100"
-            >
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Calendar size={28} className="text-slate-300" />
-              </div>
-              <h3 className="text-xl font-black text-slate-900 mb-2">No {activeTab} appointments</h3>
-              <p className="text-slate-500 font-medium">You don't have any {activeTab} appointments at the moment.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+        )}
       </div>
     </div>
   );
