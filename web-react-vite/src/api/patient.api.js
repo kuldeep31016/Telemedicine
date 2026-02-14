@@ -51,4 +51,24 @@ export const patientAPI = {
     const response = await api.get('/v1/doctors', { params });
     return response.data;
   },
+
+  /**
+   * Create Razorpay order for appointment
+   * @param {Object} data - Appointment and payment data
+   * @returns {Promise} Razorpay order details
+   */
+  createAppointmentOrder: async (data) => {
+    const response = await api.post('/v1/appointments/create-order', data);
+    return response.data;
+  },
+
+  /**
+   * Verify Razorpay payment
+   * @param {Object} data - Payment verification data
+   * @returns {Promise} Verified appointment
+   */
+  verifyPayment: async (data) => {
+    const response = await api.post('/v1/appointments/verify-payment', data);
+    return response.data;
+  },
 };
