@@ -18,7 +18,9 @@ const envSchema = Joi.object({
   LOG_FILE: Joi.string().default('logs/app.log'),
   MAX_FILE_SIZE: Joi.number().default(5242880),
   UPLOAD_DIR: Joi.string().default('uploads'),
-  WEBSOCKET_CORS_ORIGIN: Joi.string().default('http://localhost:3000')
+  WEBSOCKET_CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
+  RAZORPAY_KEY_ID: Joi.string().required(),
+  RAZORPAY_KEY_SECRET: Joi.string().required()
 }).unknown();
 
 // Validate environment variables
@@ -64,5 +66,9 @@ module.exports = {
     secure: envVars.SMTP_SECURE === 'true',
     user: envVars.SMTP_USER,
     pass: envVars.SMTP_PASS
+  },
+  razorpay: {
+    keyId: envVars.RAZORPAY_KEY_ID,
+    keySecret: envVars.RAZORPAY_KEY_SECRET
   }
 };
