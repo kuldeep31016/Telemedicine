@@ -422,7 +422,13 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
                       {/* Doctor Info */}
                       <div className="flex items-center gap-4 p-4 bg-[#F8FAFC] rounded-lg">
                         <img
-                          src={doctor.avatar || `https://i.pravatar.cc/150?img=${doctor._id}`}
+                          src={
+                            doctor.profileImage 
+                              ? (doctor.profileImage.startsWith('http') 
+                                  ? doctor.profileImage 
+                                  : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}${doctor.profileImage}`)
+                              : `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=random`
+                          }
                           alt={doctor.name}
                           className="w-16 h-16 rounded-lg object-cover"
                         />
