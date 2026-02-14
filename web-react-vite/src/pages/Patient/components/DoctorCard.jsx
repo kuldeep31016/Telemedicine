@@ -1,123 +1,136 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Clock, CreditCard, User, ShieldCheck, Globe, Calendar, ArrowRight } from 'lucide-react';
+import { Star, Clock, User, Globe } from 'lucide-react';
 
 const DoctorCard = ({ doctor, onViewProfile, onBookAppointment }) => {
     const {
         name,
         specialization,
-        rating = 4.8,
-        experience = 8,
+        rating = 4.5,
+        experience = 0,
         hourlyRate = 500,
         languages = ['English', 'Hindi'],
         availability = 'Available Today',
         profileImage,
-        hospitalName = 'CarePlus Hospital',
-        registrationNumber = 'PN/825421',
+        hospitalName = 'City General Hospital',
+        registrationNumber = 'MC/825421',
         createdAt
     } = doctor;
 
-    const practicingSince = createdAt ? new Date(createdAt).getFullYear() : 2018;
+    const practicingSince = createdAt ? new Date(createdAt).getFullYear() : new Date().getFullYear();
+    const yearsOfExperience = experience || (new Date().getFullYear() - practicingSince);
 
     const getAvailabilityStatus = (status) => {
         const s = status?.toLowerCase() || '';
-        if (s.includes('now') || s.includes('today')) return { label: 'Available Today', color: 'text-green-600', dot: 'bg-green-500' };
-        return { label: 'Next Available: Tomorrow', color: 'text-amber-600', dot: 'bg-amber-500' };
+        if (s.includes('now') || s.includes('today')) return { label: 'Available Today', color: 'text-green-600' };
+        return { label: 'Next Available: Tomorrow', color: 'text-amber-600' };
     };
 
     const status = getAvailabilityStatus(availability);
 
+    const imageUrl = profileImage
+        ? profileImage.startsWith('http')
+            ? profileImage
+            : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}${profileImage}`
+        : null;
+
     return (
         <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -2 }}
-            className="bg-white rounded-[24px] p-6 shadow-sm border border-gray-100 flex flex-col gap-6 transition-all hover:shadow-md hover:border-blue-100"
+            whileHover={{ y: -3, boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
+            transition={{ duration: 0.25 }}
+            className="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-gray-200/80 flex flex-col overflow-hidden"
         >
-            {/* Top Section: Basic Info */}
-            <div className="flex gap-4">
-                <div className="relative flex-shrink-0">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100">
-                        {profileImage ? (
-                            <img src={profileImage.startsWith('http') ? profileImage : `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001'}${profileImage}`} alt={name} className="w-full h-full object-cover" />
+            {/* ── Top: Doctor Info ── */}
+            <div className="p-5 pb-4 flex gap-4">
+                {/* Profile Image */}
+                <div className="flex-shrink-0">
+                    <div className="w-[100px] h-[100px] rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+                        {imageUrl ? (
+                            <img
+                                src={imageUrl}
+                                alt={name}
+                                className="w-full h-full object-cover"
+                            />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                <User size={32} />
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                <User size={36} strokeWidth={1.5} />
                             </div>
                         )}
                     </div>
-                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${status.dot}`} />
                 </div>
 
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                        <h3 className="text-lg font-bold text-slate-900 truncate">{name}</h3>
+                {/* Name / Specialty / Rating */}
+                <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="flex items-start gap-2 flex-wrap mb-1">
+                        <h3 className="text-[17px] font-bold text-gray-900 leading-snug">
+                            Dr. {name?.replace(/^Dr\.?\s*/i, '')}
+                        </h3>
                         {rating >= 4.5 && (
-                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[10px] font-bold">
-                                <Star size={10} fill="currentColor" />
-                                Top Rated
-                            </div>
+                            <span className="inline-flex items-center gap-1 px-2 py-[2px] bg-orange-50 border border-orange-200/60 text-orange-500 rounded text-[10px] font-semibold whitespace-nowrap mt-0.5">
+                                <Star size={9} fill="currentColor" /> Top Rated
+                            </span>
                         )}
                     </div>
-                    <p className="text-sm font-semibold text-blue-600 mb-0.5">{specialization}</p>
-                    <p className="text-xs text-slate-500 font-medium mb-2">{hospitalName}</p>
+                    <p className="text-[13px] font-semibold text-blue-600 leading-tight">{specialization}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{hospitalName}</p>
 
-                    <div className="flex items-center gap-1.5">
-                        <Star size={14} className="text-amber-400 fill-amber-400" />
-                        <span className="text-sm font-bold text-slate-700">{rating}</span>
-                        <span className="text-xs text-slate-400">(120+ reviews)</span>
+                    <div className="flex items-center gap-1.5 mt-2">
+                        <Star size={15} className="text-amber-400 fill-amber-400" />
+                        <span className="text-sm font-bold text-gray-800">{rating}</span>
+                        <span className="text-xs text-gray-400 font-medium">(120+ reviews)</span>
                     </div>
                 </div>
             </div>
 
-            {/* Stats Section: Clinical Labels */}
-            <div className="grid grid-cols-1 gap-2 border-t border-slate-50 pt-4">
-                <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-slate-500">
-                        <Clock size={14} />
-                        <span className="font-bold">{experience} Years</span>
-                        <span className="text-slate-400 font-medium">since {practicingSince}</span>
+            {/* ── Middle: Stats ── */}
+            <div className="px-5 py-3 border-t border-gray-100 space-y-2.5">
+                {/* Experience & Languages */}
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                        <Clock size={13} className="text-gray-400" />
+                        <span className="font-bold text-gray-700">{yearsOfExperience} Years</span>
+                        <span className="text-gray-400">since {practicingSince}</span>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                         {languages.slice(0, 2).map(lang => (
-                            <span key={lang} className="flex items-center gap-1 text-slate-500 font-medium">
-                                <Globe size={12} className="text-slate-300" />
+                            <span key={lang} className="flex items-center gap-1 text-gray-500">
+                                <Globe size={11} className="text-gray-400" />
                                 {lang}
                             </span>
                         ))}
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm mt-1">
-                    <div className="flex items-center gap-2 text-slate-900 font-black">
-                        <span className="text-blue-500">₹</span>
-                        {hourlyRate}
+                {/* Fee & Availability */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                        <span className="text-blue-600 text-sm">₹</span>
+                        <span className="text-[15px] font-bold text-gray-900">{hourlyRate}</span>
                     </div>
-                    <div className={`text-[11px] font-bold ${status.color}`}>
+                    <span className={`text-xs font-semibold italic ${status.color}`}>
                         {status.label}
-                    </div>
+                    </span>
                 </div>
             </div>
 
-            {/* Credibility Footer */}
-            <div className="bg-slate-50/50 -mx-6 px-6 py-2 border-y border-slate-50">
-                <p className="text-[10px] font-bold text-slate-400 tracking-tight">Reg. Number: {registrationNumber}</p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-                <button
-                    onClick={() => onBookAppointment(doctor)}
-                    className="flex-1 py-3 bg-[#2563EB] text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-all shadow-sm active:scale-95"
-                >
-                    Book Appointment
-                </button>
-                <button
-                    onClick={() => onViewProfile(doctor)}
-                    className="px-5 py-3 border border-slate-200 text-slate-600 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all active:scale-95"
-                >
-                    View Profile
-                </button>
+            {/* ── Bottom: Actions ── */}
+            <div className="px-5 pt-3 pb-5 border-t border-gray-100 space-y-3">
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => onBookAppointment(doctor)}
+                        className="flex-1 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors"
+                    >
+                        Book Appointment
+                    </button>
+                    <button
+                        onClick={() => onViewProfile(doctor)}
+                        className="flex-1 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                    >
+                        View Profile
+                    </button>
+                </div>
             </div>
         </motion.div>
     );
