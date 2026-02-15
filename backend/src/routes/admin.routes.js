@@ -54,6 +54,13 @@ router.get('/doctors/:id', (req, res, next) => {
 });
 
 /**
+ * @route   GET /api/v1/admin/appointments
+ * @desc    Get all appointments
+ * @access  Private (Admin)
+ */
+router.get('/appointments', adminController.getAllAppointments);
+
+/**
  * @route   GET /api/v1/admin/users
  * @desc    Get all users (with optional role filtering)
  * @access  Private (Admin)
