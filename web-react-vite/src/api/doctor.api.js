@@ -10,27 +10,47 @@ export const doctorAPI = {
    * @returns {Promise} Dashboard stats
    */
   getDashboardStats: async () => {
-    const response = await api.get('/v1/doctor/dashboard/stats');
+    const response = await api.get('/v1/doctors/dashboard/stats');
     return response.data;
   },
 
   /**
-   * Get appointments
+   * Get doctor's appointments
+   * @param {Object} params - Query parameters (status, startDate, endDate, limit, page)
+   * @returns {Promise} Appointments list
+   */
+  getMyAppointments: async (params = {}) => {
+    const response = await api.get('/v1/doctors/appointments', { params });
+    return response.data;
+  },
+
+  /**
+   * Get doctor's patients
+   * @param {Object} params - Query parameters (search, limit, page)
+   * @returns {Promise} Patients list
+   */
+  getMyPatients: async (params = {}) => {
+    const response = await api.get('/v1/doctors/patients', { params });
+    return response.data;
+  },
+
+  /**
+   * Get appointments (legacy - for backward compatibility)
    * @param {Object} params - Query parameters
    * @returns {Promise} Appointments list
    */
   getAppointments: async (params = {}) => {
-    const response = await api.get('/v1/doctor/appointments', { params });
+    const response = await api.get('/v1/appointments', { params });
     return response.data;
   },
 
   /**
-   * Get patients
+   * Get patients (legacy - for backward compatibility)
    * @param {Object} params - Query parameters
    * @returns {Promise} Patients list
    */
   getPatients: async (params = {}) => {
-    const response = await api.get('/v1/doctor/patients', { params });
+    const response = await api.get('/v1/appointments', { params });
     return response.data;
   },
 
