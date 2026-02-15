@@ -24,11 +24,11 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
     consultationType: 'in-person'
   });
 
-  // Generate next 14 days
+  // Generate next 14 days (including today)
   const generateDates = () => {
     const dates = [];
     const today = new Date();
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 0; i <= 14; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       dates.push({
@@ -36,7 +36,7 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
         day: date.toLocaleDateString('en-US', { weekday: 'short' }),
         date: date.getDate(),
         month: date.toLocaleDateString('en-US', { month: 'short' }),
-        isAvailable: i % 3 !== 0 // Mock: every 3rd day is unavailable
+        isAvailable: true // All dates available for testing
       });
     }
     return dates;
@@ -45,18 +45,21 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
   const [availableDates] = useState(generateDates());
   const [availableSlots, setAvailableSlots] = useState([]);
 
-  // Time slots
+  // Time slots - 15 minute intervals
   const allTimeSlots = [
-    '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-    '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM'
+    '09:00 AM', '09:15 AM', '09:30 AM', '09:45 AM', '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM', 
+    '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM',
+    '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '01:00 PM', '01:15 PM', '01:30 PM', '01:45 PM',
+    '02:00 PM', '02:15 PM', '02:30 PM', '02:45 PM', '03:00 PM', '03:15 PM', '03:30 PM', '03:45 PM', 
+    '04:00 PM', '04:15 PM', '04:30 PM', '04:45 PM', '05:00 PM'
   ];
 
   useEffect(() => {
     if (bookingData.date) {
       // Mock API call to fetch available slots for selected date
       // In production, call: await patientAPI.getAvailableSlots(doctorId, date)
-      const mockAvailableSlots = allTimeSlots.filter((_, index) => index % 2 === 0);
-      setAvailableSlots(mockAvailableSlots);
+      // For testing, all slots are available
+      setAvailableSlots(allTimeSlots);
     }
   }, [bookingData.date]);
 
