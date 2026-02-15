@@ -1,4 +1,6 @@
 const Doctor = require('../models/Doctor');
+const Appointment = require('../models/Appointment');
+const Patient = require('../models/Patient');
 const { successResponse } = require('../utils/response.util');
 const { ValidationError, NotFoundError } = require('../utils/error.util');
 const logger = require('../config/logger');
@@ -7,6 +9,231 @@ const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const path = require('path');
 
 class DoctorController {
+    /**
+     * Get doctor dashboard statistics
+     */
+    async getDashboardStats(req, res, next) {
+        try {
+            const doctorId = req.user._id;
+            
+            // Get today's date range
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            // Get this week's date range
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            
+            // Get this month's date range
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            // Total appointments
+            const totalAppointments = await Appointment.countDocuments({ doctorId });
+            
+            // Today's appointments
+            const todayAppointments = await Appointment.countDocuments({
+                doctorId,
+                appointmentDate: { $gte: today, $lt: tomorrow }
+            });
+            
+            // Pending appointments
+            const pendingAppointments = await Appointment.countDocuments({
+                doctorId,
+                status: 'confirmed',
+                appointmentDate: { $gte: today }
+            });
+            
+            // Get unique patients (total)
+            const uniquePatients = await Appointment.distinct('patientId', { doctorId });
+            const totalPatients = uniquePatients.length;
+            
+            // New patients this week
+            const newPatientsThisWeek = await Appointment.countDocuments({
+                doctorId,
+                createdAt: { $gte: startOfWeek }
+            });
+            
+            // Total earnings (sum of paid appointments)
+            const earningsResult = await Appointment.aggregate([
+                {
+                    $match: {
+                        doctorId: doctorId,
+                        paymentStatus: 'paid'
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        total: { $sum: '$amount' }
+                    }
+                }
+            ]);
+            const totalEarnings = earningsResult.length > 0 ? earningsResult[0].total : 0;
+            
+            // This month's earnings
+            const monthlyEarningsResult = await Appointment.aggregate([
+                {
+                    $match: {
+                        doctorId: doctorId,
+                        paymentStatus: 'paid',
+                        appointmentDate: { $gte: startOfMonth }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        total: { $sum: '$amount' }
+                    }
+                }
+            ]);
+            const monthlyEarnings = monthlyEarningsResult.length > 0 ? monthlyEarningsResult[0].total : 0;
+            
+            // Get doctor rating
+            const doctor = await Doctor.findById(doctorId).select('rating');
+            
+            // Stats
+            const stats = {
+                totalPatients,
+                todayAppointments,
+                newPatientsThisWeek,
+                totalAppointments,
+                pendingAppointments,
+                totalEarnings,
+                monthlyEarnings,
+                rating: doctor ? doctor.rating : 0
+            };
+            
+            logger.info(`Retrieved dashboard stats for doctor: ${doctorId}`);
+            return successResponse(res, stats, 'Dashboard stats retrieved successfully');
+        } catch (error) {
+            logger.error('Error fetching dashboard stats:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Get doctor's appointments with filters
+     */
+    async getMyAppointments(req, res, next) {
+        try {
+            const doctorId = req.user._id;
+            const { status, startDate, endDate, limit = 50, page = 1 } = req.query;
+            
+            // Build query
+            let query = { doctorId };
+            
+            // Add status filter
+            if (status) {
+                query.status = status;
+            }
+            
+            // Add date range filter
+            if (startDate || endDate) {
+                query.appointmentDate = {};
+                if (startDate) query.appointmentDate.$gte = new Date(startDate);
+                if (endDate) query.appointmentDate.$lte = new Date(endDate);
+            }
+            
+            const skip = (parseInt(page) - 1) * parseInt(limit);
+            
+            const appointments = await Appointment.find(query)
+                .populate('patientId', 'name email phone age gender')
+                .sort({ appointmentDate: 1, appointmentTime: 1 })
+                .limit(parseInt(limit))
+                .skip(skip);
+            
+            const total = await Appointment.countDocuments(query);
+            
+            const result = {
+                appointments,
+                pagination: {
+                    total,
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    totalPages: Math.ceil(total / parseInt(limit))
+                }
+            };
+            
+            logger.info(`Retrieved ${appointments.length} appointments for doctor: ${doctorId}`);
+            return successResponse(res, result, 'Appointments retrieved successfully');
+        } catch (error) {
+            logger.error('Error fetching appointments:', error);
+            next(error);
+        }
+    }
+
+    /**
+     * Get doctor's patients
+     */
+    async getMyPatients(req, res, next) {
+        try {
+            const doctorId = req.user._id;
+            const { search, limit = 50, page = 1 } = req.query;
+            
+            // Get unique patient IDs from appointments
+            const appointments = await Appointment.find({ doctorId })
+                .distinct('patientId');
+            
+            // Build patient query
+            let patientQuery = { _id: { $in: appointments } };
+            
+            // Add search filter
+            if (search) {
+                const searchRegex = new RegExp(search, 'i');
+                patientQuery.$or = [
+                    { name: searchRegex },
+                    { email: searchRegex },
+                    { phone: searchRegex }
+                ];
+            }
+            
+            const skip = (parseInt(page) - 1) * parseInt(limit);
+            
+            const patients = await Patient.find(patientQuery)
+                .select('name email phone age gender createdAt')
+                .sort({ createdAt: -1 })
+                .limit(parseInt(limit))
+                .skip(skip);
+            
+            // Get last visit for each patient
+            const patientsWithLastVisit = await Promise.all(
+                patients.map(async (patient) => {
+                    const lastAppointment = await Appointment.findOne({
+                        doctorId,
+                        patientId: patient._id
+                    })
+                        .sort({ appointmentDate: -1 })
+                        .select('appointmentDate appointmentTime consultationType');
+                    
+                    return {
+                        ...patient.toObject(),
+                        lastVisit: lastAppointment
+                    };
+                })
+            );
+            
+            const total = await Patient.countDocuments(patientQuery);
+            
+            const result = {
+                patients: patientsWithLastVisit,
+                pagination: {
+                    total,
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    totalPages: Math.ceil(total / parseInt(limit))
+                }
+            };
+            
+            logger.info(`Retrieved ${patients.length} patients for doctor: ${doctorId}`);
+            return successResponse(res, result, 'Patients retrieved successfully');
+        } catch (error) {
+            logger.error('Error fetching patients:', error);
+            next(error);
+        }
+    }
+
     /**
      * Get all active doctors
      */
