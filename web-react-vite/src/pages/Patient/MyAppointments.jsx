@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, 
@@ -17,6 +18,7 @@ import { patientAPI } from '../../api';
 import toast from 'react-hot-toast';
 
 const MyAppointments = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('upcoming');
   const [appointments, setAppointments] = useState({
     upcoming: [],
@@ -29,6 +31,7 @@ const MyAppointments = () => {
     past: 0,
     cancelled: 0
   });
+  const [countdown, setCountdown] = useState(0); // Force re-render for countdown
 
   // Fetch appointments
   const fetchAppointments = async () => {
@@ -49,11 +52,33 @@ const MyAppointments = () => {
       };
 
       allAppointments.forEach(apt => {
+        // Parse appointment date and time together
         const aptDate = new Date(apt.appointmentDate);
+        const timeStr = apt.appointmentTime;
+        
+        // Parse time (handles formats like "09:00 AM", "02:00 PM")
+        const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (timeMatch) {
+          let hours = parseInt(timeMatch[1]);
+          const minutes = parseInt(timeMatch[2]);
+          const meridiem = timeMatch[3].toUpperCase();
+          
+          if (meridiem === 'PM' && hours !== 12) hours += 12;
+          if (meridiem === 'AM' && hours === 12) hours = 0;
+          
+          aptDate.setHours(hours, minutes, 0, 0);
+        }
+        
+        // Calculate end time based on consultation duration
+        const consultationDuration = apt.consultationDuration || 15; // Default 15 minutes
+        const aptEndDate = new Date(aptDate.getTime() + consultationDuration * 60000);
+        
+        const now = new Date();
         
         if (apt.status === 'cancelled') {
           categorized.cancelled.push(transformAppointment(apt));
-        } else if (apt.status === 'completed' || aptDate < now) {
+        } else if (apt.status === 'completed' || aptEndDate < now) {
+          // Appointment is past if status is completed OR end time has passed
           categorized.past.push(transformAppointment(apt, 'completed'));
         } else {
           categorized.upcoming.push(transformAppointment(apt));
@@ -103,21 +128,37 @@ const MyAppointments = () => {
       date: formattedDate,
       time: apt.appointmentTime,
       type: apt.consultationType === 'video' ? 'Video Consultation' : 'In-Person Appointment',
+      consultationType: apt.consultationType,
       rating: 4.5, // From mock - can be calculated from reviews
       reviews: '120+', // From mock - can be added to doctor model
       fee: apt.amount,
       avatar,
       status: overrideStatus || apt.status,
+      paymentStatus: apt.paymentStatus,
       paymentId: apt.paymentId,
       orderId: apt.orderId,
       cancelReason: apt.cancellationReason || null,
-      badge: null // Can add based on doctor rating
+      badge: null, // Can add based on doctor rating
+      appointmentDate: apt.appointmentDate,
+      appointmentTime: apt.appointmentTime,
+      consultationDuration: apt.consultationDuration || 15
     };
   };
 
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  // Update countdown every second for upcoming appointments
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeTab === 'upcoming') {
+        setCountdown(prev => prev + 1);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [activeTab]);
 
   const tabs = [
     { id: 'upcoming', label: 'Upcoming', count: tabCounts.upcoming },
@@ -127,10 +168,109 @@ const MyAppointments = () => {
 
   const currentAppointments = appointments[activeTab] || [];
 
+  // Get time remaining in human-readable format
+  const getTimeRemaining = (appointmentDate, appointmentTime) => {
+    const aptDate = new Date(appointmentDate);
+    const timeMatch = appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const meridiem = timeMatch[3].toUpperCase();
+      
+      if (meridiem === 'PM' && hours !== 12) hours += 12;
+      if (meridiem === 'AM' && hours === 12) hours = 0;
+      
+      aptDate.setHours(hours, minutes, 0, 0);
+    }
+    
+    const now = new Date();
+    const timeDiff = aptDate - now;
+    const totalMinutes = Math.floor(timeDiff / 60000);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const days = Math.floor(totalHours / 24);
+    
+    // More than 24 hours - show days
+    if (days > 1) {
+      return `In ${days} days`;
+    } else if (days === 1) {
+      return 'Tomorrow';
+    }
+    // Same day - show hours and minutes
+    else if (totalHours > 0) {
+      const mins = totalMinutes % 60;
+      return `Starts in ${totalHours}h ${mins}m`;
+    }
+    // Less than an hour - show minutes
+    else if (totalMinutes > 0) {
+      return `Starts in ${totalMinutes} min`;
+    }
+    // Past
+    else {
+      return 'Time passed';
+    }
+  };
+
+  // Check if user can join the video consultation and get status message
+  const getJoinStatus = (appointmentDate, appointmentTime, consultationDuration = 15) => {
+    const aptDate = new Date(appointmentDate);
+    const timeMatch = appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const meridiem = timeMatch[3].toUpperCase();
+      
+      if (meridiem === 'PM' && hours !== 12) hours += 12;
+      if (meridiem === 'AM' && hours === 12) hours = 0;
+      
+      aptDate.setHours(hours, minutes, 0, 0);
+    }
+    
+    const now = new Date();
+    const fifteenMinsBefore = new Date(aptDate.getTime() - 15 * 60 * 1000);
+    const endTime = new Date(aptDate.getTime() + consultationDuration * 60 * 1000);
+    const timeDiff = aptDate - now;
+    const totalMinutes = Math.floor(timeDiff / 60000);
+    
+    // Debug logging
+    console.log('Join Status Check:', {
+      appointmentTime,
+      aptDate: aptDate.toLocaleString(),
+      now: now.toLocaleString(),
+      fifteenMinsBefore: fifteenMinsBefore.toLocaleString(),
+      endTime: endTime.toLocaleString(),
+      totalMinutes,
+      canJoinWindow: now >= fifteenMinsBefore && now <= endTime
+    });
+    
+    // Can join 15 minutes before and until end time
+    if (now >= fifteenMinsBefore && now <= endTime) {
+      // Show live countdown when less than 15 min
+      if (totalMinutes <= 15 && totalMinutes > 0) {
+        const mins = Math.floor(totalMinutes);
+        const secs = Math.floor((timeDiff % 60000) / 1000);
+        return { canJoin: true, message: `Starting in ${mins}:${secs.toString().padStart(2, '0')}`, isCountdown: true };
+      } else if (totalMinutes <= 0) {
+        return { canJoin: true, message: 'Join Now', isCountdown: false };
+      } else {
+        return { canJoin: true, message: 'Join Consultation', isCountdown: false };
+      }
+    } else if (timeDiff > 0) {
+      return { canJoin: false, message: getTimeRemaining(appointmentDate, appointmentTime), isCountdown: false };
+    } else {
+      return { canJoin: false, message: 'Time passed', isCountdown: false };
+    }
+  };
+
+  const handleJoinConsultation = (appointmentId) => {
+    navigate(`/patient/consultation/${appointmentId}`);
+  };
+
   const handleJoinReschedule = (appointmentId) => {
-    console.log('Join/Reschedule:', appointmentId);
-    toast.info('Join/Reschedule feature coming soon!');
-    // TODO: Implement join/reschedule logic
+    console.log('Reschedule:', appointmentId);
+    toast.info('Reschedule feature coming soon!');
+    // TODO: Implement reschedule logic
   };
 
   const handleCancel = async (appointmentId) => {
@@ -281,9 +421,16 @@ const MyAppointments = () => {
                             <span>{appointment.hospital}</span>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
-                          Ref. No: {appointment.refNo}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
+                            Ref. No: {appointment.refNo}
+                          </span>
+                          {activeTab === 'upcoming' && (
+                            <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
+                              ⏰ {getTimeRemaining(appointment.appointmentDate, appointment.appointmentTime)}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-4 mb-4">
@@ -330,12 +477,35 @@ const MyAppointments = () => {
                         <div className="flex items-center gap-3">
                           {activeTab === 'upcoming' && (
                             <>
+                              {appointment.consultationType === 'video' && 
+                               appointment.status === 'confirmed' && 
+                               appointment.paymentStatus === 'paid' && (() => {
+                                const joinStatus = getJoinStatus(
+                                  appointment.appointmentDate, 
+                                  appointment.appointmentTime,
+                                  appointment.consultationDuration || 15
+                                );
+                                return (
+                                  <button 
+                                    onClick={() => joinStatus.canJoin && handleJoinConsultation(appointment.id)}
+                                    disabled={!joinStatus.canJoin}
+                                    className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 ${
+                                      joinStatus.canJoin 
+                                        ? 'bg-green-600 text-white hover:bg-green-700 shadow-green-100 cursor-pointer' 
+                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                    }`}
+                                  >
+                                    <Video className="w-4 h-4" />
+                                    {joinStatus.message}
+                                  </button>
+                                );
+                              })()}
                               <button 
                                 onClick={() => handleJoinReschedule(appointment.id)}
                                 className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
                               >
                                 <RefreshCw className="w-4 h-4" />
-                                Join/Reschedule
+                                Reschedule
                               </button>
                               <button 
                                 onClick={() => handleCancel(appointment.id)}
