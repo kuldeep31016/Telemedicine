@@ -73,6 +73,25 @@ const appointmentSchema = new mongoose.Schema({
   meetingId: {
     type: String
   },
+  // Video consultation tracking
+  callStarted: {
+    type: Boolean,
+    default: false
+  },
+  callStartedBy: {
+    type: String,
+    enum: ['doctor', 'patient']
+  },
+  callStartedAt: {
+    type: Date
+  },
+  callEndedAt: {
+    type: Date
+  },
+  consultationDuration: {
+    type: Number,
+    default: 15 // Duration in minutes
+  },
   // Cancellation/Rescheduling
   cancellationReason: {
     type: String
