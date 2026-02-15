@@ -33,14 +33,15 @@ import {
   NotificationsNone,
   ChatBubbleOutline,
   FilterList,
-  Assignment
+  Assignment,
+  AttachMoney
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminAPI } from '../../api/admin.api';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
 
-const StatCard = ({ label, value, change, icon, trend, loading, color = '#7c3aed', sx = {} }) => (
+const StatCard = ({ label, value, change, icon, trend, loading, color = '#7c3aed', isCurrency = false, sx = {} }) => (
   <Card
     sx={{
       borderRadius: 4,
@@ -123,7 +124,7 @@ const StatCard = ({ label, value, change, icon, trend, loading, color = '#7c3aed
             letterSpacing: '-0.02em'
           }}
         >
-          {value.toLocaleString()}
+          {isCurrency ? `₹${value.toLocaleString()}` : value.toLocaleString()}
         </Typography>
       )}
     </CardContent>
@@ -133,7 +134,12 @@ const StatCard = ({ label, value, change, icon, trend, loading, color = '#7c3aed
 const AdminDashboard = () => {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    totalDoctors: 0,
+    totalAppointments: 0,
+    totalRevenue: 0
+  });
   const [recentRegistrations, setRecentRegistrations] = useState([]);
 
   const menuItems = [
@@ -153,11 +159,40 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, recentRes] = await Promise.all([
+      const [statsRes, appointmentsRes, recentRes] = await Promise.all([
         adminAPI.getDashboardStats(),
+        adminAPI.getAllAppointments(),
         adminAPI.getRecentRegistrations()
       ]);
-      setStats(statsRes.data);
+      
+      // Get patient and doctor counts from stats API (accurate database counts)
+      const totalPatients = statsRes?.data?.totalPatients || 0;
+      const totalDoctors = statsRes?.data?.totalDoctors || 0;
+      
+      // Calculate appointment count and revenue from appointments API
+      let totalAppointments = 0;
+      let totalRevenue = 0;
+      
+      if (appointmentsRes.success && appointmentsRes.data) {
+        const appointments = appointmentsRes.data;
+        totalAppointments = appointments.length;
+        
+        // Calculate total revenue (sum of paid appointments)
+        totalRevenue = appointments.reduce((sum, apt) => {
+          if (apt.paymentStatus === 'paid' && apt.amount) {
+            return sum + apt.amount;
+          }
+          return sum;
+        }, 0);
+      }
+      
+      setStats({
+        totalPatients,
+        totalDoctors,
+        totalAppointments,
+        totalRevenue
+      });
+      
       setRecentRegistrations(recentRes.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -193,7 +228,7 @@ const AdminDashboard = () => {
           <StatCard
             label="Total Patients"
             value={stats?.totalPatients || 0}
-            change={stats?.trends?.patients || '+12%'}
+            change="+12%"
             trend="up"
             icon={<People />}
             color="#2563eb"
@@ -202,29 +237,30 @@ const AdminDashboard = () => {
           <StatCard
             label="Total Doctors"
             value={stats?.totalDoctors || 0}
-            change={stats?.trends?.doctors || '+5%'}
+            change="+5%"
             trend="up"
             icon={<LocalHospital />}
             color="#7c3aed"
             loading={loading}
           />
           <StatCard
-            label="New Appointments"
+            label="Total Appointments"
             value={stats?.totalAppointments || 0}
-            change={stats?.trends?.appointments || '+8%'}
+            change="+8%"
             trend="up"
             icon={<CalendarToday />}
             color="#0891b2"
             loading={loading}
           />
           <StatCard
-            label="ASHA Workers"
-            value={stats?.totalASHAWorkers || 0}
-            change={stats?.trends?.reports || '+2%'}
+            label="Total Revenue"
+            value={stats?.totalRevenue || 0}
+            change="+25%"
             trend="up"
-            icon={<Assessment />}
+            icon={<AttachMoney />}
             color="#059669"
             loading={loading}
+            isCurrency={true}
           />
         </Box>
 
@@ -238,7 +274,7 @@ const AdminDashboard = () => {
           }}
         >
           {/* Visitors Statistics */}
-            <Card sx={{ borderRadius: 4, boxShadow: 'none', border: '1px solid #e2e8f0' }}>
+            {/* <Card sx={{ borderRadius: 4, boxShadow: 'none', border: '1px solid #e2e8f0' }}>
               <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -278,11 +314,11 @@ const AdminDashboard = () => {
                   <Typography variant="body2" color="textSecondary">Interaction Statistics Chart Visualization</Typography>
                 </Box>
               </CardContent>
-            </Card>
+            </Card> */}
 
           {/* Side Cards */}
             <Stack spacing={2}>
-              <Card sx={{ borderRadius: 4, boxShadow: 'none', border: '1px solid #e2e8f0' }}>
+              {/* <Card sx={{ borderRadius: 4, boxShadow: 'none', border: '1px solid #e2e8f0' }}>
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -303,9 +339,9 @@ const AdminDashboard = () => {
                     ))}
                   </Box>
                 </CardContent>
-              </Card>
+              </Card> */}
 
-              <Card sx={{ borderRadius: 4, bgcolor: '#1e293b', color: 'white' }}>
+              {/* <Card sx={{ borderRadius: 4, bgcolor: '#1e293b', color: 'white' }}>
                 <CardContent sx={{ p: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -325,7 +361,7 @@ const AdminDashboard = () => {
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', ml: 1 }}>Last 30 days</Typography>
                   </Box>
                 </CardContent>
-              </Card>
+              </Card> */}
             </Stack>
         </Box>
 
