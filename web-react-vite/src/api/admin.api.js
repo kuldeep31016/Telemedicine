@@ -73,4 +73,14 @@ export const adminAPI = {
     const response = await api.get(`/v1/admin/doctors/${doctorId}`);
     return response.data;
   },
+
+  /**
+   * Get all appointments
+   * @param {Object} params - Query parameters (status, date, search)
+   * @returns {Promise} Appointments list
+   */
+  getAllAppointments: async (params = {}) => {
+    const response = await api.get('/v1/admin/appointments', { params });
+    return response.data;
+  },
 };
