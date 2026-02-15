@@ -19,11 +19,13 @@ import PatientLogin from './pages/Auth/PatientLogin';
 
 // Dashboard Pages
 import AdminDashboard from './pages/Admin/Dashboard';
+import AdminAppointments from './pages/Admin/Appointments';
 import DoctorsManagement from './pages/Admin/DoctorsManagement';
 import DoctorProfile from './pages/Admin/DoctorProfile';
 import PatientsManagement from './pages/Admin/PatientsManagement';
 import DoctorDashboard from './pages/Doctor/Dashboard';
 import DoctorProfilePage from './pages/Doctor/Profile';
+import DoctorAppointments from './pages/Doctor/Appointments';
 import PatientLayout from './pages/Patient/PatientLayout';
 import DashboardOverview from './pages/Patient/DashboardOverview';
 import FindDoctors from './pages/Patient/FindDoctors';
@@ -133,11 +135,21 @@ function App() {
             <PatientsManagement />
           </ProtectedRoute>
         } />
+        <Route path="/admin/appointments" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminAppointments />
+          </ProtectedRoute>
+        } />
 
         {/* Protected Routes - Doctor */}
         <Route path="/doctor/dashboard" element={
           <ProtectedRoute allowedRoles={['doctor']}>
             <DoctorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/doctor/appointments" element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorAppointments />
           </ProtectedRoute>
         } />
         <Route path="/doctor/profile" element={
