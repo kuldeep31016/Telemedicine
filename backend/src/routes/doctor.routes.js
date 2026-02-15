@@ -22,7 +22,12 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024
 // Protect all doctor routes
 router.use(authenticate);
 
-// Doctor profile routes (must be before /:id to avoid conflict)
+// Doctor dashboard and data routes (must be before /:id)
+router.get('/dashboard/stats', isDoctor, doctorController.getDashboardStats);
+router.get('/appointments', isDoctor, doctorController.getMyAppointments);
+router.get('/patients', isDoctor, doctorController.getMyPatients);
+
+// Doctor profile routes
 router.get('/profile/me', isDoctor, doctorController.getMyProfile);
 router.put('/profile', isDoctor, doctorController.updateProfile);
 router.post('/profile/upload-photo', isDoctor, upload.single('profileImage'), doctorController.uploadProfileImage);
