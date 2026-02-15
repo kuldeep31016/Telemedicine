@@ -4,16 +4,22 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Calendar, 
+  Clock, 
+  Video, 
+  Phone as PhoneIcon,
+  MapPin, 
+  User,
+  Eye,
+  Loader2
+} from 'lucide-react';
 import {
   Box,
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Button,
   Chip,
   Tabs,
@@ -56,6 +62,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { doctorAPI } from '../../api/doctor.api';
 
 const DoctorAppointments = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -72,6 +79,7 @@ const DoctorAppointments = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(10);
+  const [countdown, setCountdown] = useState(0); // Force re-render for countdown
 
   // Sidebar menu items
   const menuItems = [
@@ -93,6 +101,15 @@ const DoctorAppointments = () => {
   useEffect(() => {
     applyFilters();
   }, [appointments, dateFilter, statusFilter, mainTab, subTab]);
+
+  // Update countdown every second for appointments
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -189,6 +206,123 @@ const DoctorAppointments = () => {
   const handleCloseDetails = () => {
     setDetailsDialogOpen(false);
     setSelectedAppointment(null);
+  };
+
+  const getTimeRemaining = (appointmentDate, appointmentTime) => {
+    const aptDate = new Date(appointmentDate);
+    const timeMatch = appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const meridiem = timeMatch[3].toUpperCase();
+      
+      if (meridiem === 'PM' && hours !== 12) hours += 12;
+      if (meridiem === 'AM' && hours === 12) hours = 0;
+      
+      aptDate.setHours(hours, minutes, 0, 0);
+    }
+    
+    const now = new Date();
+    const timeDiff = aptDate - now;
+    const totalMinutes = Math.floor(timeDiff / 60000);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const days = Math.floor(totalHours / 24);
+    
+    if (days > 1) return `In ${days} days`;
+    if (days === 1) return 'Tomorrow';
+    if (totalHours > 0) return `In ${totalHours}h ${totalMinutes % 60}m`;
+    if (totalMinutes > 0) return `In ${totalMinutes}m`;
+    return 'Now';
+  };
+
+  const getJoinStatus = (appointment) => {
+    // Check if paid
+    if (appointment.paymentStatus !== 'paid') {
+      return { canJoin: false, message: 'Payment pending' };
+    }
+    
+    // Check if confirmed
+    if (!['confirmed', 'completed'].includes(appointment.status)) {
+      return { canJoin: false, message: 'Not confirmed' };
+    }
+    
+    // Check if video consultation
+    if (appointment.consultationType !== 'video') {
+      return { canJoin: false, message: 'In-person only' };
+    }
+    
+    // Check timing (allow joining 15 minutes before)
+    const appointmentDateTime = new Date(appointment.appointmentDate);
+    const timeStr = appointment.appointmentTime;
+    
+    // Parse time (handles formats like "09:00 AM", "03:00 PM")
+    const timeMatch = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const meridiem = timeMatch[3].toUpperCase();
+      
+      if (meridiem === 'PM' && hours !== 12) hours += 12;
+      if (meridiem === 'AM' && hours === 12) hours = 0;
+      
+      appointmentDateTime.setHours(hours, minutes, 0, 0);
+    }
+    
+    const now = new Date();
+    const consultationDuration = appointment.consultationDuration || 15;
+    const endTime = new Date(appointmentDateTime.getTime() + consultationDuration * 60 * 1000);
+    const fifteenMinsBefore = new Date(appointmentDateTime.getTime() - 15 * 60 * 1000);
+    const timeDiff = appointmentDateTime - now;
+    const totalMinutes = Math.floor(timeDiff / 60000);
+    
+    // Debug logging
+    console.log('Doctor Join Status Check:', {
+      appointmentId: appointment._id,
+      appointmentTime: timeStr,
+      aptDate: appointmentDateTime.toLocaleString(),
+      now: now.toLocaleString(),
+      fifteenMinsBefore: fifteenMinsBefore.toLocaleString(),
+      endTime: endTime.toLocaleString(),
+      totalMinutes,
+      canJoinWindow: now >= fifteenMinsBefore && now <= endTime
+    });
+    
+    // Allow joining 15 minutes before and until end time
+    const canJoinByTime = now >= fifteenMinsBefore && now <= endTime;
+    
+    if (canJoinByTime) {
+      // Show live countdown when less than 15 min
+      if (totalMinutes <= 15 && totalMinutes > 0) {
+        const mins = Math.floor(totalMinutes);
+        const secs = Math.floor((timeDiff % 60000) / 1000);
+        return { canJoin: true, message: `Starting in ${mins}:${secs.toString().padStart(2, '0')}`, isCountdown: true };
+      } else if (totalMinutes <= 0) {
+        return { canJoin: true, message: 'Start Now', isCountdown: false };
+      } else {
+        return { canJoin: true, message: 'Start Consultation', isCountdown: false };
+      }
+    } else if (timeDiff > 0) {
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      const days = Math.floor(hours / 24);
+      
+      if (days > 1) {
+        return { canJoin: false, message: `In ${days} days`, isCountdown: false };
+      } else if (days === 1) {
+        return { canJoin: false, message: 'Tomorrow', isCountdown: false };
+      } else if (hours > 0) {
+        return { canJoin: false, message: `In ${hours}h ${mins}m`, isCountdown: false };
+      } else {
+        return { canJoin: false, message: `In ${mins}m`, isCountdown: false };
+      }
+    } else {
+      return { canJoin: false, message: 'Time passed', isCountdown: false };
+    }
+  };
+
+  const handleJoinConsultation = (appointmentId) => {
+    navigate(`/doctor/consultation/${appointmentId}`);
   };
 
   const getStatusColor = (status) => {
@@ -304,21 +438,21 @@ const DoctorAppointments = () => {
         </Box>
       </Box>
 
-      {/* Appointments Table */}
-      <Paper sx={{ borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
+      {/* Appointments Cards */}
+      <div className="space-y-4">
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 5 }}>
-            <CircularProgress />
-            <Typography sx={{ ml: 2 }}>Loading appointments...</Typography>
-          </Box>
+          <div className="bg-white rounded-3xl p-20 text-center border border-slate-100">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-slate-500 font-medium">Loading appointments...</p>
+          </div>
         ) : appointments.length === 0 ? (
-          <Box sx={{ p: 5, textAlign: 'center' }}>
+          <div className="bg-white rounded-3xl p-20 text-center border border-slate-100">
             <Alert severity="warning">
               No appointments found. This could mean you don't have any appointments yet or there was an error fetching them.
             </Alert>
-          </Box>
+          </div>
         ) : filteredAppointments.length === 0 ? (
-          <Box sx={{ p: 5, textAlign: 'center' }}>
+          <div className="bg-white rounded-3xl p-20 text-center border border-slate-100">
             <Alert severity="info">
               <Typography variant="body1" sx={{ mb: 1 }}>
                 No appointments match the current filters
@@ -327,108 +461,152 @@ const DoctorAppointments = () => {
                 Total appointments: {appointments.length} | Try changing the filters or tabs
               </Typography>
             </Alert>
-          </Box>
+          </div>
         ) : (
           <>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      S. No.
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      Time
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      Patient
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      Contact
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      Problem
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      Mode
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      Status
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', color: 'text.secondary' }}>
-                      
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedAppointments.map((appointment, index) => (
-                    <TableRow key={appointment._id} sx={{ '&:hover': { bgcolor: '#f9fafb' } }}>
-                      <TableCell>{(page - 1) * rowsPerPage + index + 1}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="600">
-                          {appointment.appointmentTime}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" fontWeight="600">
-                            {appointment.patientId?.name || 'N/A'}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {appointment.patientId?.age || '0'}, {appointment.patientId?.gender || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2">
-                            {appointment.patientId?.phone || 'N/A'}
-                          </Typography>
-                          <Typography variant="caption" color="primary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            ◆ {new Date(appointment.appointmentDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Typography variant="body2" fontWeight="600">
-                            {appointment.notes || 'General Consultation'}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            Appointment #{appointment._id?.slice(-6) || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        {getModeChip(appointment.consultationType)}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                          color={getStatusColor(appointment.status)}
-                          size="small"
-                          sx={{ fontWeight: 600 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<Visibility />}
-                          onClick={() => handleViewDetails(appointment)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <AnimatePresence mode="wait">
+              {paginatedAppointments.map((appointment, index) => (
+                <motion.div
+                  key={appointment._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Patient Avatar */}
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center border-2 border-slate-100">
+                      <User className="w-10 h-10 text-white" />
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-xl font-black text-slate-900">
+                              {appointment.patientId?.name || 'N/A'}
+                            </h3>
+                            <span className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
+                              #{appointment._id?.slice(-6) || 'N/A'}
+                            </span>
+                          </div>
+                          <p className="text-blue-600 font-semibold text-sm mb-1">
+                            {appointment.patientId?.age || '0'} years, {appointment.patientId?.gender || 'N/A'}
+                          </p>
+                          <div className="flex items-center gap-1 text-slate-500 text-sm">
+                            <PhoneIcon className="w-4 h-4" />
+                            <span>{appointment.patientId?.phone || 'N/A'}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold ${
+                            appointment.status === 'confirmed' ? 'bg-green-50 text-green-600 border border-green-200' :
+                            appointment.status === 'completed' ? 'bg-blue-50 text-blue-600 border border-blue-200' :
+                            appointment.status === 'cancelled' ? 'bg-red-50 text-red-600 border border-red-200' :
+                            'bg-yellow-50 text-yellow-600 border border-yellow-200'
+                          }`}>
+                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                          </span>
+                          {appointment.status === 'confirmed' && (() => {
+                            const timeRemaining = getTimeRemaining(appointment.appointmentDate, appointment.appointmentTime);
+                            return (
+                              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
+                                ⏰ {timeRemaining}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Calendar className="w-4 h-4 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 font-medium">Date</p>
+                            <p className="text-sm font-bold text-slate-900">
+                              {new Date(appointment.appointmentDate).toLocaleDateString('en-GB', { 
+                                day: 'numeric', 
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 font-medium">Time</p>
+                            <p className="text-sm font-bold text-slate-900">{appointment.appointmentTime}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Video className="w-4 h-4 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 font-medium">Type</p>
+                            <p className="text-sm font-bold text-slate-900 capitalize">{appointment.consultationType}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Problem/Notes Section */}
+                      <div className="bg-slate-50 rounded-lg p-3 mb-4">
+                        <p className="text-xs text-slate-500 font-medium mb-1">Chief Complaint</p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {appointment.notes || 'General Consultation'}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-slate-500">
+                            Duration: {appointment.consultationDuration || 15} mins
+                          </span>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3">
+                          {appointment.consultationType === 'video' && (() => {
+                            const joinStatus = getJoinStatus(appointment);
+                            return (
+                              <button 
+                                onClick={() => joinStatus.canJoin && handleJoinConsultation(appointment._id)}
+                                disabled={!joinStatus.canJoin}
+                                className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 ${
+                                  joinStatus.canJoin 
+                                    ? 'bg-green-600 text-white hover:bg-green-700 shadow-green-100 cursor-pointer' 
+                                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                }`}
+                              >
+                                <Video className="w-4 h-4" />
+                                {joinStatus.message}
+                              </button>
+                            );
+                          })()}
+                          <button 
+                            onClick={() => handleViewDetails(appointment)}
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Details
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
 
             {/* Pagination */}
-            <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'white', borderRadius: 4, border: '1px solid #e2e8f0' }}>
               <Typography variant="body2" color="textSecondary">
                 Showing {Math.min((page - 1) * rowsPerPage + 1, filteredAppointments.length)} of {filteredAppointments.length} results
               </Typography>
@@ -441,7 +619,7 @@ const DoctorAppointments = () => {
             </Box>
           </>
         )}
-      </Paper>
+      </div>
 
       {/* Appointment Details Dialog */}
       <Dialog
