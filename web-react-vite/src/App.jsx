@@ -34,6 +34,7 @@ import MedicalRecords from './pages/Patient/MedicalRecords';
 import BillsPayments from './pages/Patient/BillsPayments';
 import MyDoctors from './pages/Patient/MyDoctors';
 import Settings from './pages/Patient/Settings';
+import VideoConsultation from './pages/VideoConsultation/VideoConsultation';
 
 // Components
 import Loading from './components/common/Loading';
@@ -157,6 +158,11 @@ function App() {
             <DoctorProfilePage />
           </ProtectedRoute>
         } />
+        <Route path="/doctor/consultation/:appointmentId" element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <VideoConsultation />
+          </ProtectedRoute>
+        } />
 
         {/* Protected Routes - Patient */}
         <Route path="/patient" element={
@@ -173,6 +179,11 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route index element={<Navigate to="/patient/dashboard" replace />} />
         </Route>
+        <Route path="/patient/consultation/:appointmentId" element={
+          <ProtectedRoute allowedRoles={['patient']}>
+            <VideoConsultation />
+          </ProtectedRoute>
+        } />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
