@@ -17,10 +17,12 @@ import {
   ArrowLeft,
   Calendar,
   Camera,
-  Upload
+  Upload,
+  MapPin
 } from 'lucide-react';
 import { doctorAPI } from '../../api/doctor.api';
 import { toast } from 'react-hot-toast';
+import GooglePlacesAutocomplete from '../../components/common/GooglePlacesAutocomplete';
 
 const DoctorProfile = () => {
   const navigate = useNavigate();
@@ -38,6 +40,8 @@ const DoctorProfile = () => {
     availability: 'Available Today',
     about: '',
     hospitalName: '',
+    hospitalAddress: '',
+    location: null,
     registrationNumber: '',
     gender: 'Male',
     profileImage: ''
@@ -79,6 +83,8 @@ const DoctorProfile = () => {
           availability: data.availability || 'Available Today',
           about: data.about || '',
           hospitalName: data.hospitalName || '',
+          hospitalAddress: data.hospitalAddress || '',
+          location: data.location || null,
           registrationNumber: data.registrationNumber || '',
           gender: data.gender || 'Male',
           profileImage: data.profileImage || ''
@@ -143,6 +149,20 @@ const DoctorProfile = () => {
     });
   };
 
+  const handlePlaceSelect = (locationData) => {
+    console.log('[Profile] Place selected:', locationData);
+    setFormData(prev => ({
+      ...prev,
+      hospitalName: locationData.name,
+      hospitalAddress: locationData.address,
+      location: {
+        lat: locationData.lat,
+        lng: locationData.lng
+      }
+    }));
+    toast.success('Hospital location selected successfully!');
+  };
+
   const handleSave = async () => {
     console.log('[Profile] Save button clicked');
     console.log('[Profile] Form data:', formData);
@@ -171,6 +191,8 @@ const DoctorProfile = () => {
         availability: formData.availability,
         about: formData.about,
         hospitalName: formData.hospitalName,
+        hospitalAddress: formData.hospitalAddress,
+        location: formData.location,
         registrationNumber: formData.registrationNumber,
         gender: formData.gender,
         profileImage: formData.profileImage
@@ -364,18 +386,22 @@ const DoctorProfile = () => {
               </div>
 
               {/* Hospital Name */}
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-bold text-slate-700 mb-2">
-                  <Building size={16} className="inline mr-2" />Hospital / Clinic Name
+                  <Building size={16} className="inline mr-2" />Hospital / Clinic Name *
                 </label>
-                <input
-                  type="text"
-                  name="hospitalName"
-                  value={formData.hospitalName}
-                  onChange={handleInputChange}
+                <GooglePlacesAutocomplete
+                  value={formData.hospitalName || formData.hospitalAddress}
+                  onChange={handlePlaceSelect}
+                  placeholder="Search for your hospital or clinic..."
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  placeholder="City General Hospital"
                 />
+                {formData.hospitalAddress && (
+                  <p className="mt-2 text-xs text-gray-600 flex items-start gap-1">
+                    <MapPin size={12} className="mt-0.5 flex-shrink-0" />
+                    <span>{formData.hospitalAddress}</span>
+                  </p>
+                )}
               </div>
 
               {/* Registration Number */}
