@@ -12,10 +12,13 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
-  Loader2
+  Loader2,
+  MessageCircle
 } from 'lucide-react';
 import { patientAPI } from '../../api';
 import toast from 'react-hot-toast';
+import api from '../../config/axios';
+import ChatWindow from './components/ChatWindow';
 
 const MyAppointments = () => {
   const navigate = useNavigate();
@@ -32,6 +35,9 @@ const MyAppointments = () => {
     cancelled: 0
   });
   const [countdown, setCountdown] = useState(0); // Force re-render for countdown
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [unreadCounts, setUnreadCounts] = useState({}); // Store unread message counts
 
   // Fetch appointments
   const fetchAppointments = async () => {
@@ -40,8 +46,6 @@ const MyAppointments = () => {
       // Fetch all appointments at once
       const response = await patientAPI.getAppointments();
       const allAppointments = response.data?.appointments || [];
-      
-      console.log('Fetched appointments:', allAppointments);
 
       // Categorize appointments
       const now = new Date();
@@ -69,7 +73,6 @@ const MyAppointments = () => {
           aptDate.setHours(hours, minutes, 0, 0);
         }
         
-        // Calculate end time based on consultation duration
         const consultationDuration = apt.consultationDuration || 15; // Default 15 minutes
         const aptEndDate = new Date(aptDate.getTime() + consultationDuration * 60000);
         
@@ -78,7 +81,6 @@ const MyAppointments = () => {
         if (apt.status === 'cancelled') {
           categorized.cancelled.push(transformAppointment(apt));
         } else if (apt.status === 'completed' || aptEndDate < now) {
-          // Appointment is past if status is completed OR end time has passed
           categorized.past.push(transformAppointment(apt, 'completed'));
         } else {
           categorized.upcoming.push(transformAppointment(apt));
@@ -91,11 +93,37 @@ const MyAppointments = () => {
         past: categorized.past.length,
         cancelled: categorized.cancelled.length
       });
+      
+      // Fetch unread counts for all appointments
+      fetchUnreadCounts(allAppointments);
     } catch (error) {
       console.error('Failed to fetch appointments:', error);
       toast.error('Failed to load appointments');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUnreadCounts = async (appointmentsList) => {
+    try {
+      const countsMap = {};
+      
+      await Promise.all(
+        appointmentsList.map(async (apt) => {
+          try {
+            const response = await api.get(`/v1/chat/${apt._id}/unread`);
+            if (response.data.success && response.data.data) {
+              countsMap[apt._id] = response.data.data.count || 0;
+            }
+          } catch (error) {
+            countsMap[apt._id] = 0;
+          }
+        })
+      );
+      
+      setUnreadCounts(countsMap);
+    } catch (error) {
+      console.error('Error fetching unread counts:', error);
     }
   };
 
@@ -119,10 +147,19 @@ const MyAppointments = () => {
           : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}${doctor.profileImage}`)
       : `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name || 'Doctor')}&background=random`;
 
+    // Extract IDs - handle both populated objects and string IDs
+    const extractId = (field) => {
+      if (!field) return null;
+      if (typeof field === 'string') return field;
+      return field._id || field.id || null;
+    };
+
     return {
       id: apt._id,
       refNo: `APPT${apt._id.slice(-6).toUpperCase()}`,
       doctor: doctor.name || 'Unknown Doctor',
+      doctorId: extractId(apt.doctorId),
+      patientId: extractId(apt.patientId),
       specialization: doctor.specialization || 'General Physician',
       hospital: 'City General Hospital', // From mock - can be added to doctor model
       date: formattedDate,
@@ -233,17 +270,6 @@ const MyAppointments = () => {
     const timeDiff = aptDate - now;
     const totalMinutes = Math.floor(timeDiff / 60000);
     
-    // Debug logging
-    console.log('Join Status Check:', {
-      appointmentTime,
-      aptDate: aptDate.toLocaleString(),
-      now: now.toLocaleString(),
-      fifteenMinsBefore: fifteenMinsBefore.toLocaleString(),
-      endTime: endTime.toLocaleString(),
-      totalMinutes,
-      canJoinWindow: now >= fifteenMinsBefore && now <= endTime
-    });
-    
     // Can join 15 minutes before and until end time
     if (now >= fifteenMinsBefore && now <= endTime) {
       // Show live countdown when less than 15 min
@@ -267,10 +293,27 @@ const MyAppointments = () => {
     navigate(`/patient/consultation/${appointmentId}`);
   };
 
-  const handleJoinReschedule = (appointmentId) => {
-    console.log('Reschedule:', appointmentId);
-    toast.info('Reschedule feature coming soon!');
-    // TODO: Implement reschedule logic
+  const handleOpenChat = (appointment) => {
+    setSelectedAppointment(appointment);
+    setChatOpen(true);
+  };
+
+  const handleCloseChat = async () => {
+    if (selectedAppointment) {
+      try {
+        const response = await api.get(`/v1/chat/${selectedAppointment.id}/unread`);
+        if (response.data.success && response.data.data) {
+          setUnreadCounts(prev => ({
+            ...prev,
+            [selectedAppointment.id]: response.data.data.count || 0
+          }));
+        }
+      } catch (error) {
+        console.log('Error fetching unread count');
+      }
+    }
+    setChatOpen(false);
+    setSelectedAppointment(null);
   };
 
   const handleCancel = async (appointmentId) => {
@@ -501,11 +544,14 @@ const MyAppointments = () => {
                                 );
                               })()}
                               <button 
-                                onClick={() => handleJoinReschedule(appointment.id)}
-                                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+                                onClick={() => handleOpenChat(appointment)}
+                                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2 relative"
                               >
-                                <RefreshCw className="w-4 h-4" />
-                                Reschedule
+                                <MessageCircle className="w-4 h-4" />
+                                Chat
+                                {unreadCounts[appointment.id] > 0 && (
+                                  <span className="absolute -top-1.5 -right-1.5 w-5 h-15 bg-red-500 rounded-full border-2 border-white shadow-md"></span>
+                                )}
                               </button>
                               <button 
                                 onClick={() => handleCancel(appointment.id)}
@@ -550,6 +596,13 @@ const MyAppointments = () => {
           </AnimatePresence>
         )}
       </div>
+      
+      {/* Chat Window */}
+      <ChatWindow 
+        isOpen={chatOpen}
+        onClose={handleCloseChat}
+        appointment={selectedAppointment}
+      />
     </div>
   );
 };
