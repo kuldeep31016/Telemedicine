@@ -74,6 +74,17 @@ const doctorSchema = new mongoose.Schema({
         type: String,
         default: 'City General Hospital'
     },
+    hospitalAddress: {
+        type: String,
+        default: ''
+    },
+    location: {
+        type: {
+            lat: { type: Number },
+            lng: { type: Number }
+        },
+        default: null
+    },
     registrationNumber: {
         type: String,
         default: 'MC/825421'
