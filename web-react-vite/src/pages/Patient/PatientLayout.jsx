@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import { patientAPI } from '../../api/patient.api';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,11 +24,34 @@ const PatientLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [upcomingCount, setUpcomingCount] = useState(0);
+
+  useEffect(() => {
+    fetchUpcomingAppointments();
+  }, []);
+
+  const fetchUpcomingAppointments = async () => {
+    try {
+      const response = await patientAPI.getAppointments({ status: 'scheduled' });
+      if (response && response.success) {
+        // Count upcoming appointments (future appointments)
+        const now = new Date();
+        const upcoming = response.data.filter(apt => {
+          const aptDate = new Date(apt.appointmentDate);
+          return aptDate >= now;
+        });
+        setUpcomingCount(upcoming.length);
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      // Don't show error toast, just fail silently
+    }
+  };
 
   const menuItems = [
     { path: '/patient/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/patient/find-doctors', label: 'Find Doctors', icon: Search },
-    { path: '/patient/appointments', label: 'My Appointments', icon: Calendar, badge: '2' },
+    { path: '/patient/appointments', label: 'My Appointments', icon: Calendar, badge: upcomingCount || null },
     { path: '/patient/medical-records', label: 'Medical Records', icon: FileText },
     { path: '/patient/bills-payments', label: 'Bills & Payments', icon: CreditCard },
     { path: '/patient/my-doctors', label: 'My Doctors', icon: Stethoscope },
