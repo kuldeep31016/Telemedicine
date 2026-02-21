@@ -27,7 +27,8 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Alert
+  Alert,
+  alpha
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -41,10 +42,87 @@ import {
   CalendarToday,
   AttachMoney,
   Schedule,
-  VerifiedUser
+  VerifiedUser,
+  TrendingUp,
+  TrendingDown
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { doctorAPI } from '../../api/doctor.api';
+
+// Professional StatCard Component (like admin dashboard)
+const StatCard = ({ label, value, icon, loading, color = '#7c3aed', isCurrency = false }) => (
+  <Card
+    sx={{
+      borderRadius: 4,
+      boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+      border: '1px solid #f1f5f9',
+      bgcolor: 'white',
+      height: '100%',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+        borderColor: alpha(color, 0.2)
+      }
+    }}
+  >
+    <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
+        <Box
+          sx={{
+            bgcolor: alpha(color, 0.1),
+            color: color,
+            width: 48,
+            height: 48,
+            borderRadius: 2.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: `0 8px 16px -4px ${alpha(color, 0.2)}`
+          }}
+        >
+          {React.cloneElement(icon, { fontSize: 'medium' })}
+        </Box>
+      </Box>
+
+      <Typography
+        variant="body2"
+        sx={{
+          color: '#64748b',
+          fontWeight: '600',
+          textTransform: 'uppercase',
+          letterSpacing: 1,
+          fontSize: '0.65rem',
+          mb: 0.5,
+          textAlign: 'center'
+        }}
+      >
+        {label}
+      </Typography>
+
+      {loading ? (
+        <CircularProgress size={24} thickness={4} sx={{ mt: 1, color: color, alignSelf: 'center' }} />
+      ) : (
+        <Typography
+          variant="h3"
+          fontWeight="800"
+          sx={{
+            color: '#0f172a',
+            mt: 'auto',
+            fontSize: { xs: '1.75rem', md: '2rem' },
+            letterSpacing: '-0.02em',
+            textAlign: 'center'
+          }}
+        >
+          {isCurrency ? `₹${value.toLocaleString()}` : value.toLocaleString()}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+);
 
 const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -169,80 +247,47 @@ const DoctorDashboard = () => {
       </Box>
 
       {/* Top Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Card sx={{ borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', bgcolor: '#E3F2FD' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4A90E2' }}>
-                  <People />
-                </Box>
-              </Box>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5, textAlign: 'center' }}>
-                Total Patients
-              </Typography>
-              <Typography variant="h4" fontWeight="bold" sx={{ color: '#4A90E2', textAlign: 'center' }}>
-                {stats?.totalPatients || 0}
-              </Typography>
-            </CardContent>
-          </Card>
+      <Grid container spacing={3} sx={{ mb: 4, pl: 2 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Total Patients"
+            value={stats?.totalPatients || 0}
+            icon={<People />}
+            loading={false}
+            color="#4A90E2"
+          />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Card sx={{ borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', bgcolor: '#FFF3E0' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF9800' }}>
-                  <CalendarToday />
-                </Box>
-              </Box>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5, textAlign: 'center' }}>
-                Today's Appointments
-              </Typography>
-              <Typography variant="h4" fontWeight="bold" sx={{ color: '#FF9800', textAlign: 'center' }}>
-                {stats?.todayAppointments || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Card sx={{ borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', bgcolor: '#FFE0B2' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FF6F00' }}>
-                  <PendingActions />
-                </Box>
-              </Box>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5, textAlign: 'center' }}>
-                Pending Appointments
-              </Typography>
-              <Typography variant="h4" fontWeight="bold" sx={{ color: '#FF6F00', textAlign: 'center' }}>
-                {stats?.pendingAppointments || 0}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <Card sx={{ borderRadius: 4, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', bgcolor: '#E1BEE7' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
-                <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9C27B0' }}>
-                  <AttachMoney />
-                </Box>
-              </Box>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 0.5, textAlign: 'center' }}>
-                Monthly Earnings
-              </Typography>
-              <Typography variant="h4" fontWeight="bold" sx={{ color: '#9C27B0', textAlign: 'center' }}>
-                ₹{stats?.monthlyEarnings || 0}
-              </Typography>
-            </CardContent>
-          </Card>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Today's Appointments"
+            value={stats?.todayAppointments || 0}
+            icon={<CalendarToday />}
+            loading={false}
+            color="#FF9800"
+          />
         </Grid>
 
-       
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Total Appointments"
+            value={stats?.totalAppointments || 0}
+            icon={<Assignment />}
+            loading={false}
+            color="#FF6F00"
+          />
+        </Grid>
 
-        
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            label="Monthly Earnings"
+            value={stats?.monthlyEarnings || 0}
+            icon={<AttachMoney />}
+            loading={false}
+            color="#9C27B0"
+            isCurrency={true}
+          />
+        </Grid>
       </Grid>
 
       <Grid container spacing={3}>
