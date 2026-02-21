@@ -359,6 +359,8 @@ class DoctorController {
                 'availability',
                 'about',
                 'hospitalName',
+                'hospitalAddress',
+                'location',
                 'registrationNumber',
                 'gender',
                 'profileImage'
