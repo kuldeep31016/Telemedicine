@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Clock, User, Globe } from 'lucide-react';
+import { Star, Clock, User, Globe, MapPin, Navigation } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { getCurrentLocation } from '../../../utils/location';
 
 const DoctorCard = ({ doctor, onViewProfile, onBookAppointment }) => {
     const {
@@ -13,6 +15,8 @@ const DoctorCard = ({ doctor, onViewProfile, onBookAppointment }) => {
         availability = 'Available Today',
         profileImage,
         hospitalName = 'City General Hospital',
+        hospitalAddress,
+        location,
         registrationNumber = 'MC/825421',
         createdAt
     } = doctor;
@@ -27,6 +31,29 @@ const DoctorCard = ({ doctor, onViewProfile, onBookAppointment }) => {
     };
 
     const status = getAvailabilityStatus(availability);
+
+    const handleNavigateToHospital = async () => {
+        if (!location || !location.lat || !location.lng) {
+            toast.error('Hospital location not available. Doctor needs to update their profile.');
+            return;
+        }
+
+        try {
+            // Get user's current location
+            toast.loading('Getting your location...', { id: 'location' });
+            const userLocation = await getCurrentLocation();
+            toast.dismiss('location');
+            
+            // Open Google Maps with directions from user location to hospital
+            const url = `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${location.lat},${location.lng}&travelmode=driving`;
+            window.open(url, '_blank');
+            
+            toast.success('Opening Google Maps navigation...');
+        } catch (error) {
+            toast.dismiss('location');
+            toast.error(error.message || 'Unable to get your location. Please enable location access.');
+        }
+    };
 
     const imageUrl = profileImage
         ? profileImage.startsWith('http')
@@ -74,7 +101,14 @@ const DoctorCard = ({ doctor, onViewProfile, onBookAppointment }) => {
                         )}
                     </div>
                     <p className="text-[13px] font-semibold text-blue-600 leading-tight">{specialization}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{hospitalName}</p>
+                    <button
+                        onClick={handleNavigateToHospital}
+                        className="text-xs text-gray-500 mt-0.5 hover:text-blue-600 transition-colors flex items-center gap-1 group"
+                        title="Click to navigate via Google Maps"
+                    >
+                        <Navigation size={12} className="group-hover:text-blue-600" />
+                        <span className="underline decoration-dotted underline-offset-2">{hospitalName}</span>
+                    </button>
 
                     <div className="flex items-center gap-1.5 mt-2">
                         <Star size={15} className="text-amber-400 fill-amber-400" />
