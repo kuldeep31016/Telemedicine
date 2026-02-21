@@ -32,14 +32,34 @@ const PatientLayout = () => {
 
   const fetchUpcomingAppointments = async () => {
     try {
-      const response = await patientAPI.getAppointments({ status: 'scheduled' });
+      const response = await patientAPI.getAppointments();
+      
       if (response && response.success) {
-        // Count upcoming appointments (future appointments)
+        const allAppointments = response.data?.appointments || [];
+        
+        // Count upcoming appointments (future appointments with scheduled status)
         const now = new Date();
-        const upcoming = response.data.filter(apt => {
+        const upcoming = allAppointments.filter(apt => {
           const aptDate = new Date(apt.appointmentDate);
-          return aptDate >= now;
+          
+          // Parse time if available
+          if (apt.appointmentTime) {
+            const timeMatch = apt.appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+            if (timeMatch) {
+              let hours = parseInt(timeMatch[1]);
+              const minutes = parseInt(timeMatch[2]);
+              const meridiem = timeMatch[3].toUpperCase();
+              
+              if (meridiem === 'PM' && hours !== 12) hours += 12;
+              if (meridiem === 'AM' && hours === 12) hours = 0;
+              
+              aptDate.setHours(hours, minutes, 0, 0);
+            }
+          }
+          
+          return aptDate >= now && apt.status === 'scheduled';
         });
+        
         setUpcomingCount(upcoming.length);
       }
     } catch (error) {
@@ -51,7 +71,7 @@ const PatientLayout = () => {
   const menuItems = [
     { path: '/patient/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/patient/find-doctors', label: 'Find Doctors', icon: Search },
-    { path: '/patient/appointments', label: 'My Appointments', icon: Calendar, badge: upcomingCount || null },
+    { path: '/patient/appointments', label: 'My Appointments', icon: Calendar, badge: upcomingCount > 0 ? upcomingCount : null },
     { path: '/patient/medical-records', label: 'Medical Records', icon: FileText },
     { path: '/patient/bills-payments', label: 'Bills & Payments', icon: CreditCard },
     { path: '/patient/my-doctors', label: 'My Doctors', icon: Stethoscope },
@@ -105,7 +125,7 @@ const PatientLayout = () => {
                         {item.label}
                       </span>
                       {item.badge && (
-                        <span className="ml-auto bg-[#DC2626] text-white text-xs font-bold px-1.5 py-0.5 rounded-md">
+                        <span className="ml-auto bg-[#10B981] text-white text-xs font-bold px-1.5 py-0.5 rounded-md">
                           {item.badge}
                         </span>
                       )}
