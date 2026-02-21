@@ -8,6 +8,7 @@ const adminRoutes = require('./admin.routes');
 const doctorRoutes = require('./doctor.routes');
 const appointmentRoutes = require('./appointment.routes');
 const videoRoutes = require('./video.routes');
+const chatRoutes = require('./chat.routes');
 
 // API v1 routes
 router.use('/v1/auth', authRoutes);
@@ -16,6 +17,7 @@ router.use('/v1/admin', adminRoutes);
 router.use('/v1/doctors', doctorRoutes);
 router.use('/v1/appointments', appointmentRoutes);
 router.use('/v1/video', videoRoutes);
+router.use('/v1/chat', chatRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
