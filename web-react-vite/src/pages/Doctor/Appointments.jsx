@@ -14,7 +14,8 @@ import {
   MapPin, 
   User,
   Eye,
-  Loader2
+  Loader2,
+  MessageCircle
 } from 'lucide-react';
 import {
   Box,
@@ -60,26 +61,39 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { doctorAPI } from '../../api/doctor.api';
+import api from '../../config/axios';
+import ChatWindow from '../Patient/components/ChatWindow';
 
 const DoctorAppointments = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState([]);
-  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [stats, setStats] = useState(null);
 
   // Filter states
+  const [activeTab, setActiveTab] = useState('upcoming'); // 'upcoming', 'past', 'cancelled'
+  const [appointmentsByTab, setAppointmentsByTab] = useState({
+    upcoming: [],
+    past: [],
+    cancelled: []
+  });
+  const [tabCounts, setTabCounts] = useState({
+    upcoming: 0,
+    past: 0,
+    cancelled: 0
+  });
   const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'tomorrow'
   const [statusFilter, setStatusFilter] = useState('all');
-  const [mainTab, setMainTab] = useState(0); // 0: Pending, 1: Completed
-  const [subTab, setSubTab] = useState(0); // 0: All, 1: Pending
 
   // Pagination
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(10);
   const [countdown, setCountdown] = useState(0); // Force re-render for countdown
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatAppointment, setChatAppointment] = useState(null);
+  const [unreadCounts, setUnreadCounts] = useState({}); // Store unread message counts by appointmentId
 
   // Sidebar menu items
   const menuItems = [
@@ -97,10 +111,6 @@ const DoctorAppointments = () => {
     fetchAppointments();
     fetchStats();
   }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [appointments, dateFilter, statusFilter, mainTab, subTab]);
 
   // Update countdown every second for appointments
   useEffect(() => {
@@ -132,6 +142,39 @@ const DoctorAppointments = () => {
         const appointmentsList = response.data.appointments || [];
         console.log('Appointments received:', appointmentsList.length);
         setAppointments(appointmentsList);
+        
+        // Categorize appointments
+        const categorized = {
+          upcoming: [],
+          past: [],
+          cancelled: []
+        };
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        appointmentsList.forEach(apt => {
+          const aptDate = new Date(apt.appointmentDate);
+          aptDate.setHours(0, 0, 0, 0);
+
+          if (apt.status === 'cancelled') {
+            categorized.cancelled.push(apt);
+          } else if (aptDate >= now && (apt.status === 'confirmed' || apt.status === 'pending')) {
+            categorized.upcoming.push(apt);
+          } else {
+            categorized.past.push(apt);
+          }
+        });
+
+        setAppointmentsByTab(categorized);
+        setTabCounts({
+          upcoming: categorized.upcoming.length,
+          past: categorized.past.length,
+          cancelled: categorized.cancelled.length
+        });
+        
+        // Fetch unread message counts for each appointment
+        fetchUnreadCounts(appointmentsList);
       } else {
         console.error('API returned success: false');
         setAppointments([]);
@@ -144,58 +187,29 @@ const DoctorAppointments = () => {
     }
   };
 
-  const applyFilters = () => {
-    console.log('Applying filters to', appointments.length, 'appointments');
-    let filtered = [...appointments];
-
-    // Date filter
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (dateFilter === 'today') {
-      filtered = filtered.filter(apt => {
-        const aptDate = new Date(apt.appointmentDate);
-        aptDate.setHours(0, 0, 0, 0);
-        return aptDate.getTime() === today.getTime();
-      });
-      console.log('After today filter:', filtered.length);
-    } else if (dateFilter === 'tomorrow') {
-      filtered = filtered.filter(apt => {
-        const aptDate = new Date(apt.appointmentDate);
-        aptDate.setHours(0, 0, 0, 0);
-        return aptDate.getTime() === tomorrow.getTime();
-      });
-      console.log('After tomorrow filter:', filtered.length);
+  const fetchUnreadCounts = async (appointmentsList) => {
+    try {
+      const countsMap = {};
+      
+      // Fetch unread count for each appointment in parallel
+      await Promise.all(
+        appointmentsList.map(async (appointment) => {
+          try {
+            const response = await api.get(`/v1/chat/${appointment._id}/unread`);
+            if (response.data.success && response.data.data) {
+              countsMap[appointment._id] = response.data.data.count || 0;
+            }
+          } catch (error) {
+            // Ignore errors for individual appointments
+            countsMap[appointment._id] = 0;
+          }
+        })
+      );
+      
+      setUnreadCounts(countsMap);
+    } catch (error) {
+      console.error('Error fetching unread counts:', error);
     }
-
-    // Main tab filter (Pending/Completed)
-    if (mainTab === 0) {
-      // Pending tab - show all except completed and cancelled
-      filtered = filtered.filter(apt => apt.status !== 'completed' && apt.status !== 'cancelled');
-      console.log('After pending tab filter:', filtered.length);
-    } else {
-      // Completed tab
-      filtered = filtered.filter(apt => apt.status === 'completed');
-      console.log('After completed tab filter:', filtered.length);
-    }
-
-    // Sub tab filter (only apply if on Pending main tab)
-    if (mainTab === 0 && subTab === 1) {
-      // Only pending status
-      filtered = filtered.filter(apt => apt.status === 'confirmed' || apt.status === 'pending');
-      console.log('After sub-tab pending filter:', filtered.length);
-    }
-
-    // Status dropdown filter (overrides other filters if not 'all')
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(apt => apt.status === statusFilter);
-      console.log('After status filter:', filtered.length);
-    }
-
-    console.log('Final filtered appointments:', filtered.length);
-    setFilteredAppointments(filtered);
   };
 
   const handleViewDetails = (appointment) => {
@@ -207,6 +221,36 @@ const DoctorAppointments = () => {
     setDetailsDialogOpen(false);
     setSelectedAppointment(null);
   };
+
+  const handleOpenChat = (appointment) => {
+    setChatAppointment(appointment);
+    setChatOpen(true);
+  };
+
+  const handleCloseChat = async () => {
+    // Refresh unread count for the chat appointment when closing
+    if (chatAppointment) {
+      try {
+        const response = await api.get(`/v1/chat/${chatAppointment._id}/unread`);
+        if (response.data.success && response.data.data) {
+          setUnreadCounts(prev => ({
+            ...prev,
+            [chatAppointment._id]: response.data.data.count || 0
+          }));
+        }
+      } catch (error) {
+        console.log('Error fetching unread count');
+      }
+    }
+    setChatOpen(false);
+    setChatAppointment(null);
+  };
+
+  const tabs = [
+    { id: 'upcoming', label: 'Upcoming', count: tabCounts.upcoming },
+    { id: 'past', label: 'Past', count: tabCounts.past },
+    { id: 'cancelled', label: 'Cancelled', count: tabCounts.cancelled }
+  ];
 
   const getTimeRemaining = (appointmentDate, appointmentTime) => {
     const aptDate = new Date(appointmentDate);
@@ -354,7 +398,8 @@ const DoctorAppointments = () => {
   };
 
   // Pagination
-  const paginatedAppointments = filteredAppointments.slice(
+  const currentAppointments = appointmentsByTab[activeTab] || [];
+  const paginatedAppointments = currentAppointments.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
@@ -385,7 +430,7 @@ const DoctorAppointments = () => {
         </Box>
 
         {/* Filters Section */}
-        <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <Button
             variant={dateFilter === 'today' ? 'contained' : 'outlined'}
             onClick={() => setDateFilter('today')}
@@ -419,22 +464,34 @@ const DoctorAppointments = () => {
           >
             Show Filters
           </Button>
-        </Box>
+        </Box> */}
 
-        {/* Main Tabs */}
-        <Box sx={{ mt: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={mainTab} onChange={(e, v) => setMainTab(v)}>
-            <Tab label="Pending" />
-            <Tab label="Completed" />
-          </Tabs>
-        </Box>
-
-        {/* Sub Tabs */}
-        <Box sx={{ mt: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={subTab} onChange={(e, v) => setSubTab(v)}>
-            <Tab label="All" />
-            <Tab label="Pending" />
-          </Tabs>
+        {/* Appointment Tabs */}
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-start' }}>
+          <div className="flex items-center gap-2 bg-white rounded-xl p-1 border border-slate-200 shadow-sm">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
+                    activeTab === tab.id
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </Box>
       </Box>
 
@@ -451,14 +508,14 @@ const DoctorAppointments = () => {
               No appointments found. This could mean you don't have any appointments yet or there was an error fetching them.
             </Alert>
           </div>
-        ) : filteredAppointments.length === 0 ? (
+        ) : currentAppointments.length === 0 ? (
           <div className="bg-white rounded-3xl p-20 text-center border border-slate-100">
             <Alert severity="info">
               <Typography variant="body1" sx={{ mb: 1 }}>
-                No appointments match the current filters
+                No {activeTab} appointments
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Total appointments: {appointments.length} | Try changing the filters or tabs
+                Total appointments: {appointments.length}
               </Typography>
             </Alert>
           </div>
@@ -472,31 +529,31 @@ const DoctorAppointments = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all"
+                  className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all"
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3">
                     {/* Patient Avatar */}
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center border-2 border-slate-100">
-                      <User className="w-10 h-10 text-white" />
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center border-2 border-slate-100">
+                      <User className="w-7 h-7 text-white" />
                     </div>
 
                     {/* Main Content */}
                     <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start justify-between mb-2">
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-xl font-black text-slate-900">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <h3 className="text-lg font-black text-slate-900">
                               {appointment.patientId?.name || 'N/A'}
                             </h3>
                             <span className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-lg">
                               #{appointment._id?.slice(-6) || 'N/A'}
                             </span>
                           </div>
-                          <p className="text-blue-600 font-semibold text-sm mb-1">
+                          <p className="text-blue-600 font-semibold text-xs mb-0.5">
                             {appointment.patientId?.age || '0'} years, {appointment.patientId?.gender || 'N/A'}
                           </p>
-                          <div className="flex items-center gap-1 text-slate-500 text-sm">
-                            <PhoneIcon className="w-4 h-4" />
+                          <div className="flex items-center gap-1 text-slate-500 text-xs">
+                            <PhoneIcon className="w-3 h-3" />
                             <span>{appointment.patientId?.phone || 'N/A'}</span>
                           </div>
                         </div>
@@ -520,14 +577,14 @@ const DoctorAppointments = () => {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
-                            <Calendar className="w-4 h-4 text-slate-600" />
+                      <div className="grid grid-cols-3 gap-3 mb-3">
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <div className="w-7 h-7 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Calendar className="w-3.5 h-3.5 text-slate-600" />
                           </div>
                           <div>
-                            <p className="text-xs text-slate-500 font-medium">Date</p>
-                            <p className="text-sm font-bold text-slate-900">
+                            <p className="text-[10px] text-slate-500 font-medium">Date</p>
+                            <p className="text-xs font-bold text-slate-900">
                               {new Date(appointment.appointmentDate).toLocaleDateString('en-GB', { 
                                 day: 'numeric', 
                                 month: 'short',
@@ -536,35 +593,35 @@ const DoctorAppointments = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
-                            <Clock className="w-4 h-4 text-slate-600" />
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <div className="w-7 h-7 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Clock className="w-3.5 h-3.5 text-slate-600" />
                           </div>
                           <div>
-                            <p className="text-xs text-slate-500 font-medium">Time</p>
-                            <p className="text-sm font-bold text-slate-900">{appointment.appointmentTime}</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Time</p>
+                            <p className="text-xs font-bold text-slate-900">{appointment.appointmentTime}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center">
-                            <Video className="w-4 h-4 text-slate-600" />
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <div className="w-7 h-7 bg-slate-50 rounded-lg flex items-center justify-center">
+                            <Video className="w-3.5 h-3.5 text-slate-600" />
                           </div>
                           <div>
-                            <p className="text-xs text-slate-500 font-medium">Type</p>
-                            <p className="text-sm font-bold text-slate-900 capitalize">{appointment.consultationType}</p>
+                            <p className="text-[10px] text-slate-500 font-medium">Type</p>
+                            <p className="text-xs font-bold text-slate-900 capitalize">{appointment.consultationType}</p>
                           </div>
                         </div>
                       </div>
 
                       {/* Problem/Notes Section */}
-                      <div className="bg-slate-50 rounded-lg p-3 mb-4">
-                        <p className="text-xs text-slate-500 font-medium mb-1">Chief Complaint</p>
-                        <p className="text-sm font-semibold text-slate-900">
+                      <div className="bg-slate-50 rounded-lg p-2 mb-3">
+                        <p className="text-[10px] text-slate-500 font-medium mb-0.5">Chief Complaint</p>
+                        <p className="text-xs font-semibold text-slate-900">
                           {appointment.notes || 'General Consultation'}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                         <div className="flex items-center gap-3">
                           <span className="text-xs text-slate-500">
                             Duration: {appointment.consultationDuration || 15} mins
@@ -572,14 +629,14 @@ const DoctorAppointments = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           {appointment.consultationType === 'video' && (() => {
                             const joinStatus = getJoinStatus(appointment);
                             return (
                               <button 
                                 onClick={() => joinStatus.canJoin && handleJoinConsultation(appointment._id)}
                                 disabled={!joinStatus.canJoin}
-                                className={`px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 ${
+                                className={`px-4 py-2 rounded-xl font-bold transition-all shadow-lg flex items-center gap-1.5 text-sm ${
                                   joinStatus.canJoin 
                                     ? 'bg-green-600 text-white hover:bg-green-700 shadow-green-100 cursor-pointer' 
                                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'
@@ -591,10 +648,20 @@ const DoctorAppointments = () => {
                             );
                           })()}
                           <button 
-                            onClick={() => handleViewDetails(appointment)}
-                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2"
+                            onClick={() => handleOpenChat(appointment)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-1.5 text-sm relative"
                           >
-                            <Eye className="w-4 h-4" />
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            Chat
+                            {unreadCounts[appointment._id] > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-md"></span>
+                            )}
+                          </button>
+                          <button 
+                            onClick={() => handleViewDetails(appointment)}
+                            className="px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition-all flex items-center gap-1.5 text-sm"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
                             View Details
                           </button>
                         </div>
@@ -608,10 +675,10 @@ const DoctorAppointments = () => {
             {/* Pagination */}
             <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'white', borderRadius: 4, border: '1px solid #e2e8f0' }}>
               <Typography variant="body2" color="textSecondary">
-                Showing {Math.min((page - 1) * rowsPerPage + 1, filteredAppointments.length)} of {filteredAppointments.length} results
+                Showing {Math.min((page - 1) * rowsPerPage + 1, currentAppointments.length)} of {currentAppointments.length} results
               </Typography>
               <Pagination
-                count={Math.ceil(filteredAppointments.length / rowsPerPage)}
+                count={Math.ceil(currentAppointments.length / rowsPerPage)}
                 page={page}
                 onChange={(e, value) => setPage(value)}
                 color="primary"
@@ -964,6 +1031,13 @@ const DoctorAppointments = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* Chat Window */}
+      <ChatWindow 
+        isOpen={chatOpen}
+        onClose={handleCloseChat}
+        appointment={chatAppointment}
+      />
     </DashboardLayout>
   );
 };
