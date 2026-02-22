@@ -409,7 +409,40 @@ exports.getUserAppointments = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const appointments = await Appointment.find(query)
+    let appointments = await Appointment.find(query)
+      .populate('doctorId', 'name email specialization profileImage')
+      .populate('patientId', 'name email phone')
+      .sort({ appointmentDate: -1 })
+      .limit(parseInt(limit))
+      .skip(skip);
+
+    // Auto-cancel expired reschedule requests (1 hour check)
+    const now = new Date();
+    for (let appointment of appointments) {
+      if (appointment.rescheduleStatus === 'pending' && appointment.rescheduleRequestedAt) {
+        const rescheduleTime = new Date(appointment.rescheduleRequestedAt);
+        const expiryTime = new Date(rescheduleTime.getTime() + 60 * 60 * 1000);
+        
+        if (now > expiryTime) {
+          // Auto-cancel
+          appointment.status = 'cancelled';
+          appointment.rescheduleStatus = 'expired';
+          appointment.cancellationReason = 'Patient did not respond to reschedule request within 1 hour';
+          appointment.cancelledBy = 'auto';
+          appointment.cancelledAt = new Date();
+          appointment.refundStatus = 'refunded';
+          appointment.refundAmount = appointment.amount;
+          appointment.refundedAt = new Date();
+          
+          await appointment.save();
+          
+          logger.info(`Auto-cancelled appointment ${appointment._id} due to expired reschedule request`);
+        }
+      }
+    }
+
+    // Refresh appointments after auto-cancel
+    appointments = await Appointment.find(query)
       .populate('doctorId', 'name email specialization profileImage')
       .populate('patientId', 'name email phone')
       .sort({ appointmentDate: -1 })
@@ -471,21 +504,326 @@ exports.cancelAppointment = async (req, res) => {
       return res.status(400).json(createErrorResponse('Cannot cancel completed appointment'));
     }
 
-    // Update appointment
+    // If doctor is cancelling, check 1 hour rule
+    if (userRole === 'doctor' && appointment.doctorId.toString() === userId.toString()) {
+      const aptDateTime = new Date(appointment.appointmentDate);
+      const timeMatch = appointment.appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (timeMatch) {
+        let hours = parseInt(timeMatch[1]);
+        const minutes = parseInt(timeMatch[2]);
+        const period = timeMatch[3].toUpperCase();
+        
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        
+        aptDateTime.setHours(hours, minutes, 0, 0);
+      }
+
+      const now = new Date();
+      const oneHourBefore = new Date(aptDateTime.getTime() - 60 * 60 * 1000);
+
+      if (now >= oneHourBefore) {
+        return res.status(400).json(
+          createErrorResponse('Cannot cancel within 1 hour of appointment time')
+        );
+      }
+    }
+
+    // Update appointment with cancellation and refund
     appointment.status = 'cancelled';
     appointment.cancellationReason = cancellationReason || 'No reason provided';
     appointment.cancelledBy = userRole;
     appointment.cancelledAt = new Date();
+    
+    // Process refund (full amount)
+    if (appointment.paymentStatus === 'paid') {
+      appointment.refundStatus = 'refunded';
+      appointment.refundAmount = appointment.amount;
+      appointment.refundedAt = new Date();
+    }
+    
     await appointment.save();
 
-    logger.info(`Appointment ${id} cancelled by ${userRole} ${userId}`);
+    logger.info(`Appointment ${id} cancelled by ${userRole} ${userId} with refund`);
 
     res.status(200).json(
-      createSuccessResponse(appointment, 'Appointment cancelled successfully')
+      createSuccessResponse({
+        appointment,
+        message: appointment.refundStatus === 'refunded' 
+          ? 'Appointment cancelled successfully. Full refund has been processed.' 
+          : 'Appointment cancelled successfully.'
+      }, 'Appointment cancelled successfully')
     );
   } catch (error) {
     logger.error('Cancel appointment error:', error);
     res.status(500).json(createErrorResponse('Failed to cancel appointment', error.message));
+  }
+};
+
+/**
+ * Get Booked Slots for a Doctor on a Specific Date
+ * GET /api/v1/appointments/booked-slots
+ * Query params: doctorId, date
+ */
+exports.getBookedSlots = async (req, res) => {
+  try {
+    const { doctorId, date } = req.query;
+
+    // Validate required fields
+    if (!doctorId || !date) {
+      return res.status(400).json(
+        createErrorResponse('Doctor ID and date are required')
+      );
+    }
+
+    // Verify doctor exists
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json(createErrorResponse('Doctor not found'));
+    }
+
+    // Parse the date and create start/end of day
+    const appointmentDate = new Date(date);
+    const startOfDay = new Date(appointmentDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(appointmentDate.setHours(23, 59, 59, 999));
+
+    // Find all confirmed appointments for this doctor on this date
+    const bookedAppointments = await Appointment.find({
+      doctorId: doctorId,
+      appointmentDate: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      },
+      status: { $in: ['confirmed', 'rescheduled'] }, // Only confirmed and rescheduled appointments block slots
+      paymentStatus: 'paid' // Only paid appointments block slots
+    }).select('appointmentTime');
+
+    // Extract just the time slots
+    const bookedSlots = bookedAppointments.map(apt => apt.appointmentTime);
+
+    logger.info(`Retrieved ${bookedSlots.length} booked slots for doctor ${doctorId} on ${date}`);
+
+    res.status(200).json(
+      createSuccessResponse({ bookedSlots }, 'Booked slots retrieved successfully')
+    );
+  } catch (error) {
+    logger.error('Get booked slots error:', error);
+    res.status(500).json(createErrorResponse('Failed to get booked slots', error.message));
+  }
+};
+
+/**
+ * Doctor Reschedule Appointment (must be at least 1 hour before appointment)
+ * PUT /api/v1/appointments/:id/reschedule
+ */
+exports.doctorRescheduleAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newAppointmentDate, newAppointmentTime } = req.body;
+    const doctorId = req.user._id;
+
+    logger.info(`[DoctorReschedule] Doctor ${doctorId} attempting to reschedule appointment ${id}`);
+
+    // Validate required fields
+    if (!newAppointmentDate || !newAppointmentTime) {
+      return res.status(400).json(
+        createErrorResponse('New appointment date and time are required')
+      );
+    }
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json(createErrorResponse('Appointment not found'));
+    }
+
+    // Verify doctor owns this appointment
+    if (appointment.doctorId.toString() !== doctorId.toString()) {
+      return res.status(403).json(createErrorResponse('Access denied'));
+    }
+
+    // Check if appointment can be rescheduled
+    if (appointment.status === 'cancelled') {
+      return res.status(400).json(createErrorResponse('Cannot reschedule cancelled appointment'));
+    }
+
+    if (appointment.status === 'completed') {
+      return res.status(400).json(createErrorResponse('Cannot reschedule completed appointment'));
+    }
+
+    // Check if already has pending reschedule
+    if (appointment.rescheduleStatus === 'pending') {
+      return res.status(400).json(createErrorResponse('A reschedule request is already pending'));
+    }
+
+    // Parse appointment date and time to check if within 1 hour
+    const aptDateTime = new Date(appointment.appointmentDate);
+    const timeMatch = appointment.appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const period = timeMatch[3].toUpperCase();
+      
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      aptDateTime.setHours(hours, minutes, 0, 0);
+    }
+
+    const now = new Date();
+    const oneHourBefore = new Date(aptDateTime.getTime() - 60 * 60 * 1000);
+
+    if (now >= oneHourBefore) {
+      return res.status(400).json(
+        createErrorResponse('Cannot reschedule within 1 hour of appointment time')
+      );
+    }
+
+    // Update appointment with reschedule request
+    appointment.rescheduleRequestedBy = 'doctor';
+    appointment.rescheduleRequestedAt = new Date();
+    appointment.proposedAppointmentDate = new Date(newAppointmentDate);
+    appointment.proposedAppointmentTime = newAppointmentTime;
+    appointment.rescheduleStatus = 'pending';
+    
+    await appointment.save();
+
+    logger.info(`[DoctorReschedule] Reschedule request created for appointment ${id}`);
+
+    res.status(200).json(
+      createSuccessResponse({
+        appointment,
+        message: 'Reschedule request sent to patient. Patient has 1 hour to respond.'
+      }, 'Reschedule request created successfully')
+    );
+  } catch (error) {
+    logger.error('Doctor reschedule error:', error);
+    res.status(500).json(createErrorResponse('Failed to reschedule appointment', error.message));
+  }
+};
+
+/**
+ * Patient Accept Reschedule
+ * PUT /api/v1/appointments/:id/accept-reschedule
+ */
+exports.patientAcceptReschedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const patientId = req.user._id;
+
+    logger.info(`[PatientAcceptReschedule] Patient ${patientId} accepting reschedule for appointment ${id}`);
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json(createErrorResponse('Appointment not found'));
+    }
+
+    // Verify patient owns this appointment
+    if (appointment.patientId.toString() !== patientId.toString()) {
+      return res.status(403).json(createErrorResponse('Access denied'));
+    }
+
+    // Check if there's a pending reschedule
+    if (appointment.rescheduleStatus !== 'pending') {
+      return res.status(400).json(createErrorResponse('No pending reschedule request'));
+    }
+
+    // Check if reschedule request has expired (1 hour)
+    const rescheduleTime = new Date(appointment.rescheduleRequestedAt);
+    const expiryTime = new Date(rescheduleTime.getTime() + 60 * 60 * 1000);
+    const now = new Date();
+
+    if (now > expiryTime) {
+      // Auto-cancel if expired
+      appointment.status = 'cancelled';
+      appointment.rescheduleStatus = 'expired';
+      appointment.cancellationReason = 'Patient did not respond to reschedule request within 1 hour';
+      appointment.cancelledBy = 'auto';
+      appointment.cancelledAt = new Date();
+      appointment.refundStatus = 'refunded';
+      appointment.refundAmount = appointment.amount;
+      appointment.refundedAt = new Date();
+      
+      await appointment.save();
+
+      return res.status(400).json(
+        createErrorResponse('Reschedule request has expired. Appointment has been cancelled and refunded.')
+      );
+    }
+
+    // Accept reschedule - update appointment
+    appointment.appointmentDate = appointment.proposedAppointmentDate;
+    appointment.appointmentTime = appointment.proposedAppointmentTime;
+    appointment.rescheduleStatus = 'accepted';
+    appointment.proposedAppointmentDate = null;
+    appointment.proposedAppointmentTime = null;
+    
+    await appointment.save();
+
+    logger.info(`[PatientAcceptReschedule] Appointment ${id} rescheduled successfully`);
+
+    res.status(200).json(
+      createSuccessResponse(appointment, 'Appointment rescheduled successfully')
+    );
+  } catch (error) {
+    logger.error('Patient accept reschedule error:', error);
+    res.status(500).json(createErrorResponse('Failed to accept reschedule', error.message));
+  }
+};
+
+/**
+ * Patient Reject Reschedule (Cancel appointment with refund)
+ * PUT /api/v1/appointments/:id/reject-reschedule
+ */
+exports.patientRejectReschedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const patientId = req.user._id;
+
+    logger.info(`[PatientRejectReschedule] Patient ${patientId} rejecting reschedule for appointment ${id}`);
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json(createErrorResponse('Appointment not found'));
+    }
+
+    // Verify patient owns this appointment
+    if (appointment.patientId.toString() !== patientId.toString()) {
+      return res.status(403).json(createErrorResponse('Access denied'));
+    }
+
+    // Check if there's a pending reschedule
+    if (appointment.rescheduleStatus !== 'pending') {
+      return res.status(400).json(createErrorResponse('No pending reschedule request'));
+    }
+
+    // Reject reschedule - cancel appointment with full refund
+    appointment.status = 'cancelled';
+    appointment.rescheduleStatus = 'rejected';
+    appointment.cancellationReason = 'Patient rejected reschedule request';
+    appointment.cancelledBy = 'patient';
+    appointment.cancelledAt = new Date();
+    appointment.refundStatus = 'refunded';
+    appointment.refundAmount = appointment.amount;
+    appointment.refundedAt = new Date();
+    appointment.proposedAppointmentDate = null;
+    appointment.proposedAppointmentTime = null;
+    
+    await appointment.save();
+
+    logger.info(`[PatientRejectReschedule] Appointment ${id} cancelled with full refund`);
+
+    res.status(200).json(
+      createSuccessResponse({
+        appointment,
+        message: 'Appointment cancelled. Full refund has been processed.'
+      }, 'Reschedule rejected and appointment cancelled')
+    );
+  } catch (error) {
+    logger.error('Patient reject reschedule error:', error);
+    res.status(500).json(createErrorResponse('Failed to reject reschedule', error.message));
   }
 };
 
