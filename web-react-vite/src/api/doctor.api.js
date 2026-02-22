@@ -117,4 +117,28 @@ export const doctorAPI = {
     });
     return response.data;
   },
+
+  /**
+   * Reschedule appointment (Doctor only)
+   * @param {String} appointmentId - Appointment ID
+   * @param {Object} data - New date and time
+   * @returns {Promise} Updated appointment
+   */
+  rescheduleAppointment: async (appointmentId, data) => {
+    const response = await api.put(`/v1/appointments/${appointmentId}/reschedule`, data);
+    return response.data;
+  },
+
+  /**
+   * Cancel appointment
+   * @param {String} appointmentId - Appointment ID
+   * @param {String} reason - Cancellation reason
+   * @returns {Promise} Cancelled appointment
+   */
+  cancelAppointment: async (appointmentId, reason) => {
+    const response = await api.put(`/v1/appointments/${appointmentId}/cancel`, {
+      cancellationReason: reason
+    });
+    return response.data;
+  },
 };
