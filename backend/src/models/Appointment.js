@@ -92,13 +92,47 @@ const appointmentSchema = new mongoose.Schema({
     type: Number,
     default: 15 // Duration in minutes
   },
+  // Reschedule Request (Doctor initiated)
+  rescheduleRequestedBy: {
+    type: String,
+    enum: ['doctor', 'patient']
+  },
+  rescheduleRequestedAt: {
+    type: Date
+  },
+  proposedAppointmentDate: {
+    type: Date
+  },
+  proposedAppointmentTime: {
+    type: String
+  },
+  rescheduleStatus: {
+    type: String,
+    enum: ['none', 'pending', 'accepted', 'rejected', 'expired'],
+    default: 'none',
+    index: true
+  },
+  // Refund tracking
+  refundStatus: {
+    type: String,
+    enum: ['none', 'pending', 'refunded'],
+    default: 'none',
+    index: true
+  },
+  refundAmount: {
+    type: Number,
+    default: 0
+  },
+  refundedAt: {
+    type: Date
+  },
   // Cancellation/Rescheduling
   cancellationReason: {
     type: String
   },
   cancelledBy: {
     type: String,
-    enum: ['patient', 'doctor', 'admin']
+    enum: ['patient', 'doctor', 'admin', 'auto']
   },
   cancelledAt: {
     type: Date
