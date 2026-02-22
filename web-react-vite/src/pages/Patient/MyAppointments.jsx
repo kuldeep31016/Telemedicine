@@ -13,12 +13,22 @@ import {
   XCircle,
   RefreshCw,
   Loader2,
-  MessageCircle
+  MessageCircle,
+  AlertTriangle,
+  Check
 } from 'lucide-react';
 import { patientAPI } from '../../api';
 import toast from 'react-hot-toast';
 import api from '../../config/axios';
 import ChatWindow from './components/ChatWindow';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Alert
+} from '@mui/material';
 
 const MyAppointments = () => {
   const navigate = useNavigate();
@@ -38,6 +48,8 @@ const MyAppointments = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [unreadCounts, setUnreadCounts] = useState({}); // Store unread message counts
+  const [rejectConfirmOpen, setRejectConfirmOpen] = useState(false);
+  const [appointmentToReject, setAppointmentToReject] = useState(null);
 
   // Fetch appointments
   const fetchAppointments = async () => {
@@ -178,7 +190,13 @@ const MyAppointments = () => {
       badge: null, // Can add based on doctor rating
       appointmentDate: apt.appointmentDate,
       appointmentTime: apt.appointmentTime,
-      consultationDuration: apt.consultationDuration || 15
+      consultationDuration: apt.consultationDuration || 15,
+      // Reschedule fields
+      rescheduleStatus: apt.rescheduleStatus || 'none',
+      rescheduleRequestedBy: apt.rescheduleRequestedBy || null,
+      rescheduleRequestedAt: apt.rescheduleRequestedAt || null,
+      proposedAppointmentDate: apt.proposedAppointmentDate || null,
+      proposedAppointmentTime: apt.proposedAppointmentTime || null
     };
   };
 
@@ -316,6 +334,52 @@ const MyAppointments = () => {
     setSelectedAppointment(null);
   };
 
+  const handleAcceptReschedule = async (appointmentId) => {
+    try {
+      const response = await patientAPI.acceptReschedule(appointmentId);
+      if (response.success) {
+        toast.success('Reschedule accepted! Appointment updated to new date/time.');
+        fetchAppointments(); // Refresh list
+      } else {
+        toast.error(response.message || 'Failed to accept reschedule');
+      }
+    } catch (error) {
+      console.error('Accept reschedule error:', error);
+      if (error.response?.data?.message?.includes('expired')) {
+        toast.error('Reschedule request expired. Appointment has been cancelled with refund.');
+        fetchAppointments(); // Refresh to show cancelled status
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to accept reschedule');
+      }
+    }
+  };
+
+  const handleOpenRejectConfirm = (appointment) => {
+    setAppointmentToReject(appointment);
+    setRejectConfirmOpen(true);
+  };
+
+  const handleCloseRejectConfirm = () => {
+    setRejectConfirmOpen(false);
+    setAppointmentToReject(null);
+  };
+
+  const handleConfirmRejectReschedule = async () => {
+    try {
+      const response = await patientAPI.rejectReschedule(appointmentToReject.id);
+      if (response.success) {
+        toast.success('Appointment cancelled with full refund. You can book another appointment.');
+        fetchAppointments(); // Refresh list
+        handleCloseRejectConfirm();
+      } else {
+        toast.error(response.message || 'Failed to reject reschedule');
+      }
+    } catch (error) {
+      console.error('Reject reschedule error:', error);
+      toast.error(error.response?.data?.message || 'Failed to reject reschedule');
+    }
+  };
+
   const handleCancel = async (appointmentId) => {
     if (!confirm('Are you sure you want to cancel this appointment?')) {
       return;
@@ -432,6 +496,51 @@ const MyAppointments = () => {
                   transition={{ delay: index * 0.1 }}
                   className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all"
                 >
+                  {/* Reschedule Notification Banner */}
+                  {appointment.rescheduleStatus === 'pending' && appointment.proposedAppointmentDate && (
+                    <div className="mb-4 p-4 bg-amber-50 border-2 border-amber-300 rounded-xl">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <AlertTriangle className="w-5 h-5 text-amber-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-bold text-amber-900 mb-1">
+                            Doctor has requested to reschedule your appointment          
+                          </h4>
+                          <p className="text-sm text-amber-800 mb-3">
+                            <strong>New Date:</strong> {new Date(appointment.proposedAppointmentDate).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                            <br />
+                            <strong>New Time:</strong> {appointment.proposedAppointmentTime}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleAcceptReschedule(appointment.id)}
+                              className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-all text-sm"
+                            >
+                              <Check className="w-4 h-4" />
+                              Accept Reschedule
+                            </button>
+                            <button 
+                              onClick={() => handleOpenRejectConfirm(appointment)}
+                              className="flex items-center gap-1.5 px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-all text-sm"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Reject & Cancel
+                            </button>
+                          </div>
+                          <p className="text-xs text-amber-700 mt-2">
+                            ⏰ You have 1 hour from the reschedule request to respond, or the appointment will be auto-cancelled with refund.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-start gap-4">
                     {/* Doctor Avatar */}
                     <img 
@@ -550,7 +659,7 @@ const MyAppointments = () => {
                                 <MessageCircle className="w-4 h-4" />
                                 Chat
                                 {unreadCounts[appointment.id] > 0 && (
-                                  <span className="absolute -top-1.5 -right-1.5 w-5 h-15 bg-red-500 rounded-full border-2 border-white shadow-md"></span>
+                                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full border-2 border-white shadow-md"></span>
                                 )}
                               </button>
                               <button 
@@ -603,6 +712,64 @@ const MyAppointments = () => {
         onClose={handleCloseChat}
         appointment={selectedAppointment}
       />
+
+      {/* Reject Reschedule Confirmation Dialog */}
+      <Dialog
+        open={rejectConfirmOpen}
+        onClose={handleCloseRejectConfirm}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 20 }}>
+          Reject Reschedule & Cancel Appointment
+        </DialogTitle>
+        <DialogContent>
+          <div style={{ paddingTop: 16 }}>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              If you reject this reschedule request, the appointment will be cancelled and you will receive a full refund.
+            </Alert>
+            <p style={{ color: '#64748b', marginBottom: 16 }}>
+              You can book a new appointment with this or another doctor after cancellation.
+            </p>
+            <p style={{ color: '#0f172a', fontWeight: 600 }}>
+              Are you sure you want to cancel this appointment?
+            </p>
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button 
+            onClick={handleCloseRejectConfirm}
+            sx={{ 
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600
+            }}
+          >
+            Go Back
+          </Button>
+          <Button 
+            onClick={handleConfirmRejectReschedule}
+            variant="contained"
+            color="error"
+            sx={{ 
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600
+            }}
+          >
+            Confirm Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
