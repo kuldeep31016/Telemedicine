@@ -93,15 +93,27 @@ export const generatePaymentReceipt = (appointmentData) => {
       day: 'numeric'
     });
 
+    // Check if refunded
+    const isRefunded = appointment.status === 'cancelled' && appointment.refundStatus === 'refunded';
+    const paymentStatus = isRefunded ? 'Refunded' : 'Paid';
+
+    const paymentInfoData = [
+      ['Order ID:', appointment.orderId || 'N/A'],
+      ['Payment ID:', appointment.paymentId || 'N/A'],
+      ['Payment Status:', paymentStatus],
+      ['Payment Method:', 'Netbanking'],
+      ['Transaction Date:', invoiceDate]
+    ];
+
+    // Add refund information if applicable
+    if (isRefunded) {
+      paymentInfoData.push(['Refund Date:', appointment.refundedAt ? new Date(appointment.refundedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A']);
+      paymentInfoData.push(['Refund Amount:', `Rs ${String(appointment.refundAmount || appointment.amount || 0)}`]);
+    }
+
     autoTable(doc, {
       startY: yPos,
-      body: [
-        ['Order ID:', appointment.orderId || 'N/A'],
-        ['Payment ID:', appointment.paymentId || 'N/A'],
-        ['Payment Status:', 'Paid'],
-        ['Payment Method:', 'Netbanking'],
-        ['Transaction Date:', invoiceDate]
-      ],
+      body: paymentInfoData,
       theme: 'grid',
       styles: {
         fontSize: 10,
@@ -115,6 +127,18 @@ export const generatePaymentReceipt = (appointmentData) => {
         },
         1: { 
           cellWidth: contentWidth - 50
+        }
+      },
+      didParseCell: function(data) {
+        // Highlight refund status in red
+        if (isRefunded && data.row.index === 2) {
+          data.cell.styles.textColor = [220, 38, 38]; // Red
+          data.cell.styles.fontStyle = 'bold';
+        }
+        // Highlight refund information rows in light red
+        if (isRefunded && data.row.index >= 5) {
+          data.cell.styles.fillColor = [254, 226, 226]; // Light red
+          data.cell.styles.fontStyle = 'bold';
         }
       },
       margin: { left: margin, right: margin }
@@ -165,13 +189,20 @@ export const generatePaymentReceipt = (appointmentData) => {
     doc.text('Billing Summary', margin, yPos);
     yPos += 5;
 
+    const billingSummaryData = [
+      ['Consultation Fee:', `Rs ${String(appointment.amount || 0)}`],
+      ['Tax:', 'Rs 0']
+    ];
+
+    if (isRefunded) {
+      billingSummaryData.push(['Total Refunded:', `Rs ${String(appointment.refundAmount || appointment.amount || 0)}`]);
+    } else {
+      billingSummaryData.push(['Total Paid:', `Rs ${String(appointment.amount || 0)}`]);
+    }
+
     autoTable(doc, {
       startY: yPos,
-      body: [
-        ['Consultation Fee:', `Rs ${String(appointment.amount || 0)}`],
-        ['Tax:', 'Rs 0'],
-        ['Total Paid:', `Rs ${String(appointment.amount || 0)}`]
-      ],
+      body: billingSummaryData,
       theme: 'grid',
       styles: {
         fontSize: 10,
@@ -189,10 +220,15 @@ export const generatePaymentReceipt = (appointmentData) => {
         }
       },
       didParseCell: function(data) {
-        // Apply light green background to Total Paid row (last row, index 2)
+        // Apply light green background to Total Paid row or light red to Refunded row (last row, index 2)
         if (data.row.index === 2) {
-          data.cell.styles.fillColor = [220, 252, 231]; // Light green
-          data.cell.styles.textColor = [0, 0, 0];
+          if (isRefunded) {
+            data.cell.styles.fillColor = [254, 226, 226]; // Light red for refund
+            data.cell.styles.textColor = [153, 27, 27]; // Dark red
+          } else {
+            data.cell.styles.fillColor = [220, 252, 231]; // Light green for paid
+            data.cell.styles.textColor = [0, 0, 0];
+          }
           data.cell.styles.fontStyle = 'bold';
         }
       },
@@ -200,6 +236,31 @@ export const generatePaymentReceipt = (appointmentData) => {
     });
 
     yPos = doc.lastAutoTable.finalY + 15;
+
+    // Refund Notice (if applicable)
+    if (isRefunded) {
+      // Background box for refund notice
+      doc.setFillColor(254, 226, 226); // Light red
+      doc.roundedRect(margin, yPos - 3, contentWidth, 25, 2, 2, 'F');
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(153, 27, 27); // Dark red
+      doc.text('REFUND NOTICE', margin + 5, yPos + 5);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(120, 20, 20);
+      doc.text('✓ Full refund processed with NO DEDUCTION', margin + 5, yPos + 12);
+      doc.text(`✓ Refund Amount: Rs ${String(appointment.refundAmount || appointment.amount || 0)}`, margin + 5, yPos + 18);
+      
+      if (appointment.cancellationReason) {
+        doc.setFontSize(8);
+        doc.text(`Reason: ${appointment.cancellationReason}`, margin + 5, yPos + 24);
+      }
+      
+      yPos += 30;
+    }
 
     // Divider
     doc.setDrawColor(200, 200, 200);
@@ -212,7 +273,7 @@ export const generatePaymentReceipt = (appointmentData) => {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 100, 100);
-    doc.text('Thank you for your payment!', margin, yPos);
+    doc.text(isRefunded ? 'This appointment was cancelled and refunded.' : 'Thank you for your payment!', margin, yPos);
     yPos += 5;
     doc.setFontSize(9);
     doc.text('This is a system-generated receipt. No signature required.', margin, yPos);
