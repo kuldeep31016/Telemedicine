@@ -154,7 +154,12 @@ const BillsPayments = () => {
           consultationType: payment.appointmentData.consultationType,
           appointmentDate: payment.appointmentData.appointmentDate,
           appointmentTime: payment.time,
-          amount: payment.amount
+          amount: payment.amount,
+          status: payment.appointmentData.status || payment.status,
+          refundStatus: payment.appointmentData.refundStatus,
+          refundAmount: payment.appointmentData.refundAmount,
+          refundedAt: payment.appointmentData.refundedAt,
+          cancellationReason: payment.appointmentData.cancellationReason
         },
         patient: {
           name: user?.name || 'Patient',
