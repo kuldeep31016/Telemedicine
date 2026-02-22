@@ -84,4 +84,37 @@ export const patientAPI = {
     const response = await api.post('/v1/appointments/verify-payment', data);
     return response.data;
   },
+
+  /**
+   * Get booked slots for a doctor on a specific date
+   * @param {String} doctorId - Doctor ID
+   * @param {String} date - Date in YYYY-MM-DD format
+   * @returns {Promise} Array of booked time slots
+   */
+  getBookedSlots: async (doctorId, date) => {
+    const response = await api.get('/v1/appointments/booked-slots', {
+      params: { doctorId, date }
+    });
+    return response.data;
+  },
+
+  /**
+   * Accept doctor's reschedule request
+   * @param {String} appointmentId - Appointment ID
+   * @returns {Promise} Updated appointment
+   */
+  acceptReschedule: async (appointmentId) => {
+    const response = await api.put(`/v1/appointments/${appointmentId}/accept-reschedule`);
+    return response.data;
+  },
+
+  /**
+   * Reject doctor's reschedule request (cancels appointment with refund)
+   * @param {String} appointmentId - Appointment ID
+   * @returns {Promise} Cancelled appointment
+   */
+  rejectReschedule: async (appointmentId) => {
+    const response = await api.put(`/v1/appointments/${appointmentId}/reject-reschedule`);
+    return response.data;
+  },
 };
