@@ -15,7 +15,9 @@ import {
   User,
   Eye,
   Loader2,
-  MessageCircle
+  MessageCircle,
+  CalendarClock,
+  XCircle
 } from 'lucide-react';
 import {
   Box,
@@ -63,6 +65,8 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { doctorAPI } from '../../api/doctor.api';
 import api from '../../config/axios';
 import ChatWindow from '../Patient/components/ChatWindow';
+import RescheduleModal from './components/RescheduleModal';
+import toast from 'react-hot-toast';
 
 const DoctorAppointments = () => {
   const navigate = useNavigate();
@@ -87,13 +91,18 @@ const DoctorAppointments = () => {
   const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'tomorrow'
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Pagination
+  
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(10);
   const [countdown, setCountdown] = useState(0); // Force re-render for countdown
   const [chatOpen, setChatOpen] = useState(false);
   const [chatAppointment, setChatAppointment] = useState(null);
   const [unreadCounts, setUnreadCounts] = useState({}); // Store unread message counts by appointmentId
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [appointmentToReschedule, setAppointmentToReschedule] = useState(null);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
 
   // Sidebar menu items
   const menuItems = [
@@ -244,6 +253,89 @@ const DoctorAppointments = () => {
     }
     setChatOpen(false);
     setChatAppointment(null);
+  };
+
+  // Check if within 1 hour of appointment (for enabling/disabling reschedule/cancel)
+  const isWithinOneHour = (appointmentDate, appointmentTime) => {
+    const aptDateTime = new Date(appointmentDate);
+    const timeMatch = appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const period = timeMatch[3].toUpperCase();
+      
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      aptDateTime.setHours(hours, minutes, 0, 0);
+    }
+
+    const now = new Date();
+    const oneHourBefore = new Date(aptDateTime.getTime() - 60 * 60 * 1000);
+
+    return now >= oneHourBefore;
+  };
+
+  const handleOpenReschedule = (appointment) => {
+    setAppointmentToReschedule(appointment);
+    setRescheduleModalOpen(true);
+  };
+
+  const handleCloseReschedule = () => {
+    setRescheduleModalOpen(false);
+    setAppointmentToReschedule(null);
+  };
+
+  const handleConfirmReschedule = async (rescheduleData) => {
+    try {
+      const response = await doctorAPI.rescheduleAppointment(appointmentToReschedule._id, {
+        newAppointmentDate: rescheduleData.date,
+        newAppointmentTime: rescheduleData.time
+      });
+
+      if (response.success) {
+        toast.success('Reschedule request sent to patient. They have 1 hour to respond.');
+        fetchAppointments(); // Refresh the list
+        handleCloseReschedule();
+      } else {
+        toast.error(response.message || 'Failed to reschedule appointment');
+      }
+    } catch (error) {
+      console.error('Reschedule error:', error);
+      toast.error(error.response?.data?.message || 'Failed to reschedule appointment');
+    }
+  };
+
+  const handleOpenCancelConfirm = (appointment) => {
+    setAppointmentToCancel(appointment);
+    setCancelConfirmOpen(true);
+    setCancelReason('');
+  };
+
+  const handleCloseCancelConfirm = () => {
+    setCancelConfirmOpen(false);
+    setAppointmentToCancel(null);
+    setCancelReason('');
+  };
+
+  const handleConfirmCancel = async () => {
+    try {
+      const response = await doctorAPI.cancelAppointment(
+        appointmentToCancel._id, 
+        cancelReason || 'Cancelled by doctor'
+      );
+
+      if (response.success) {
+        toast.success(response.data.message || 'Appointment cancelled successfully. Full refund processed.');
+        fetchAppointments(); // Refresh the list
+        handleCloseCancelConfirm();
+      } else {
+        toast.error(response.message || 'Failed to cancel appointment');
+      }
+    } catch (error) {
+      console.error('Cancel error:', error);
+      toast.error(error.response?.data?.message || 'Failed to cancel appointment');
+    }
   };
 
   const tabs = [
@@ -630,6 +722,44 @@ const DoctorAppointments = () => {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2">
+                          {/* Reschedule Button - Only for upcoming confirmed appointments */}
+                          {appointment.status === 'confirmed' && activeTab === 'upcoming' && (
+                            <button 
+                              onClick={() => handleOpenReschedule(appointment)}
+                              disabled={isWithinOneHour(appointment.appointmentDate, appointment.appointmentTime)}
+                              className={`px-4 py-2 rounded-xl font-bold transition-all shadow-lg flex items-center gap-1.5 text-sm ${
+                                isWithinOneHour(appointment.appointmentDate, appointment.appointmentTime)
+                                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                  : 'bg-purple-600 text-white hover:bg-purple-700 shadow-purple-100'
+                              }`}
+                              title={isWithinOneHour(appointment.appointmentDate, appointment.appointmentTime) 
+                                ? 'Cannot reschedule within 1 hour of appointment' 
+                                : 'Reschedule appointment'}
+                            >
+                              <CalendarClock className="w-3.5 h-3.5" />
+                              Reschedule
+                            </button>
+                          )}
+
+                          {/* Cancel Button - Only for upcoming confirmed appointments */}
+                          {appointment.status === 'confirmed' && activeTab === 'upcoming' && (
+                            <button 
+                              onClick={() => handleOpenCancelConfirm(appointment)}
+                              disabled={isWithinOneHour(appointment.appointmentDate, appointment.appointmentTime)}
+                              className={`px-4 py-2 rounded-xl font-bold transition-all shadow-lg flex items-center gap-1.5 text-sm ${
+                                isWithinOneHour(appointment.appointmentDate, appointment.appointmentTime)
+                                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                  : 'bg-red-600 text-white hover:bg-red-700 shadow-red-100'
+                              }`}
+                              title={isWithinOneHour(appointment.appointmentDate, appointment.appointmentTime) 
+                                ? 'Cannot cancel within 1 hour of appointment' 
+                                : 'Cancel appointment'}
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              Cancel
+                            </button>
+                          )}
+
                           {appointment.consultationType === 'video' && (() => {
                             const joinStatus = getJoinStatus(appointment);
                             return (
@@ -1038,6 +1168,79 @@ const DoctorAppointments = () => {
         onClose={handleCloseChat}
         appointment={chatAppointment}
       />
+
+      {/* Reschedule Modal */}
+      <RescheduleModal  
+        isOpen={rescheduleModalOpen}
+        onClose={handleCloseReschedule}
+        appointment={appointmentToReschedule}
+        doctorId={appointmentToReschedule?.doctorId?._id}
+        onConfirm={handleConfirmReschedule}
+      />
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog
+        open={cancelConfirmOpen}
+        onClose={handleCloseCancelConfirm}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 20 }}>
+          Cancel Appointment
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ py: 2 }}>
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              This action will cancel the appointment and process a full refund to the patient.
+            </Alert>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Please provide a reason for cancellation (optional):
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="e.g., Emergency, Rescheduling needed, etc."
+              variant="outlined"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button 
+            onClick={handleCloseCancelConfirm}
+            sx={{ 
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600
+            }}
+          >
+            Go Back
+          </Button>
+          <Button 
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            sx={{ 
+              textTransform: 'none',
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              fontWeight: 600
+            }}
+          >
+            Confirm Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DashboardLayout>
   );
 };
