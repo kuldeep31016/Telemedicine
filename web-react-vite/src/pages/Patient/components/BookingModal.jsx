@@ -44,6 +44,8 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
 
   const [availableDates] = useState(generateDates());
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Time slots - 15 minute intervals
   const allTimeSlots = [
@@ -55,18 +57,42 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
   ];
 
   useEffect(() => {
-    if (bookingData.date) {
-      // Mock API call to fetch available slots for selected date
-      // In production, call: await patientAPI.getAvailableSlots(doctorId, date)
-      // For testing, all slots are available
-      setAvailableSlots(allTimeSlots);
-    }
-  }, [bookingData.date]);
+    const fetchBookedSlots = async () => {
+      if (bookingData.date && doctor?._id) {
+        setLoadingSlots(true);
+        try {
+          // Fetch booked slots for the selected doctor and date
+          const response = await patientAPI.getBookedSlots(doctor._id, bookingData.date);
+          const booked = response.data?.bookedSlots || [];
+          setBookedSlots(booked);
+          
+          // Filter out booked slots from all time slots
+          const available = allTimeSlots.filter(slot => !booked.includes(slot));
+          setAvailableSlots(available);
+          
+          console.log(`Found ${booked.length} booked slots, ${available.length} available slots`);
+        } catch (error) {
+          console.error('Error fetching booked slots:', error);
+          toast.error('Failed to load available slots');
+          // If there's an error, show all slots as available
+          setAvailableSlots(allTimeSlots);
+          setBookedSlots([]);
+        } finally {
+          setLoadingSlots(false);
+        }
+      }
+    };
+
+    fetchBookedSlots();
+  }, [bookingData.date, doctor?._id]);
 
   const handleClose = () => {
     onClose();
     setStep(1);
     setBookingData({ date: '', time: '', consultationType: 'in-person' });
+    setAvailableSlots([]);
+    setBookedSlots([]);
+    setLoadingSlots(false);
   };
 
   const loadRazorpayScript = () => {
@@ -345,27 +371,57 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
                         <h3 className="text-[16px] font-semibold text-[#0F172A] mb-4" style={{letterSpacing: '-0.3px'}}>
                           Available Time Slots
                         </h3>
-                        {availableSlots.length > 0 ? (
-                          <div className="grid grid-cols-4 gap-3">
-                            {availableSlots.map((slot, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setBookingData({ ...bookingData, time: slot })}
-                                className={`py-3 px-2 rounded-lg text-[12px] font-medium transition-all ${
-                                  bookingData.time === slot
-                                    ? 'bg-[#2563EB] text-white'
-                                    : 'bg-[#F8FAFC] hover:bg-[#E2E8F0] text-[#0F172A] border border-[#E2E8F0]'
-                                }`}
-                              >
-                                {slot}
-                              </button>
-                            ))}
+                        {loadingSlots ? (
+                          <div className="text-center py-8 bg-[#F8FAFC] rounded-lg">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto mb-2"></div>
+                            <p className="text-[14px] font-medium text-[#64748B]">Loading slots...</p>
                           </div>
+                        ) : availableSlots.length > 0 || bookedSlots.length > 0 ? (
+                          <>
+                            <div className="grid grid-cols-4 gap-3">
+                              {allTimeSlots.map((slot, index) => {
+                                const isBooked = bookedSlots.includes(slot);
+                                const isAvailable = availableSlots.includes(slot);
+                                
+                                return (
+                                  <button
+                                    key={index}
+                                    onClick={() => isAvailable && setBookingData({ ...bookingData, time: slot })}
+                                    disabled={isBooked}
+                                    className={`py-3 px-2 rounded-lg text-[12px] font-medium transition-all relative ${
+                                      bookingData.time === slot
+                                        ? 'bg-[#2563EB] text-white'
+                                        : isBooked
+                                        ? 'bg-[#FEE2E2] text-[#991B1B] cursor-not-allowed opacity-75 line-through'
+                                        : 'bg-[#F8FAFC] hover:bg-[#E2E8F0] text-[#0F172A] border border-[#E2E8F0]'
+                                    }`}
+                                    title={isBooked ? 'This slot is already booked' : 'Available'}
+                                  >
+                                    {slot}
+                                    {isBooked && (
+                                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#DC2626] rounded-full flex items-center justify-center">
+                                        <X className="w-3 h-3 text-white" />
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {bookedSlots.length > 0 && (
+                              <div className="mt-4 p-3 bg-[#FEF3C7] border border-[#FDE047] rounded-lg flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 text-[#CA8A04] mt-0.5 flex-shrink-0" />
+                                <p className="text-[12px] text-[#92400E]">
+                                  <strong>{bookedSlots.length}</strong> slot{bookedSlots.length > 1 ? 's are' : ' is'} already booked. 
+                                  Please select from the available slots.
+                                </p>
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <div className="text-center py-8 bg-[#FEF3C7] rounded-lg">
                             <AlertCircle className="w-8 h-8 text-[#F59E0B] mx-auto mb-2" />
                             <p className="text-[14px] font-medium text-[#92400E]">No slots available</p>
-                            <p className="text-[12px] text-[#92400E] mt-1">Please select another date</p>
+                            <p className="text-[12px] text-[#92400E] mt-1">All slots are booked for this date. Please select another date.</p>
                           </div>
                         )}
                       </div>
