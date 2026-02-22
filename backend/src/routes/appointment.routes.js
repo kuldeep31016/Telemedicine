@@ -4,6 +4,12 @@ const appointmentController = require('../controllers/appointment.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 const { authorize } = require('../middleware/role.middleware');
 
+// Get booked slots for a doctor on a specific date (no auth required for checking availability)
+router.get(
+  '/booked-slots',
+  appointmentController.getBookedSlots
+);
+
 // Payment routes (patient only)
 router.post(
   '/create-order',
@@ -41,6 +47,30 @@ router.put(
   authenticate,
   authorize('patient', 'doctor', 'admin'),
   appointmentController.cancelAppointment
+);
+
+// Doctor reschedule appointment
+router.put(
+  '/:id/reschedule',
+  authenticate,
+  authorize('doctor'),
+  appointmentController.doctorRescheduleAppointment
+);
+
+// Patient accept reschedule
+router.put(
+  '/:id/accept-reschedule',
+  authenticate,
+  authorize('patient'),
+  appointmentController.patientAcceptReschedule
+);
+
+// Patient reject reschedule
+router.put(
+  '/:id/reject-reschedule',
+  authenticate,
+  authorize('patient'),
+  appointmentController.patientRejectReschedule
 );
 
 module.exports = router;
