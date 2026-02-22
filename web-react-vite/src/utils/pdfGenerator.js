@@ -195,7 +195,8 @@ export const generatePaymentReceipt = (appointmentData) => {
     ];
 
     if (isRefunded) {
-      billingSummaryData.push(['Total Refunded:', `Rs ${String(appointment.refundAmount || appointment.amount || 0)}`]);
+      billingSummaryData.push(['Original Amount Paid:', `Rs ${String(appointment.amount || 0)}`]);
+      billingSummaryData.push(['REFUND AMOUNT:', `Rs ${String(appointment.refundAmount || appointment.amount || 0)}`]);
     } else {
       billingSummaryData.push(['Total Paid:', `Rs ${String(appointment.amount || 0)}`]);
     }
@@ -220,16 +221,27 @@ export const generatePaymentReceipt = (appointmentData) => {
         }
       },
       didParseCell: function(data) {
-        // Apply light green background to Total Paid row or light red to Refunded row (last row, index 2)
-        if (data.row.index === 2) {
-          if (isRefunded) {
-            data.cell.styles.fillColor = [254, 226, 226]; // Light red for refund
-            data.cell.styles.textColor = [153, 27, 27]; // Dark red
-          } else {
-            data.cell.styles.fillColor = [220, 252, 231]; // Light green for paid
-            data.cell.styles.textColor = [0, 0, 0];
+        // Apply different backgrounds for paid/refunded rows
+        if (isRefunded) {
+          // Original Amount Paid row (index 2) - light yellow
+          if (data.row.index === 2) {
+            data.cell.styles.fillColor = [254, 243, 199]; // Light yellow/amber
+            data.cell.styles.fontStyle = 'bold';
           }
-          data.cell.styles.fontStyle = 'bold';
+          // REFUND AMOUNT row (index 3) - prominent red
+          if (data.row.index === 3) {
+            data.cell.styles.fillColor = [254, 226, 226]; // Light red
+            data.cell.styles.textColor = [220, 38, 38]; // Bright red text
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fontSize = 11; // Larger font
+          }
+        } else {
+          // Total Paid row (index 2) - light green
+          if (data.row.index === 2) {
+            data.cell.styles.fillColor = [220, 252, 231]; // Light green
+            data.cell.styles.textColor = [0, 0, 0];
+            data.cell.styles.fontStyle = 'bold';
+          }
         }
       },
       margin: { left: margin, right: margin }
@@ -251,8 +263,8 @@ export const generatePaymentReceipt = (appointmentData) => {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120, 20, 20);
-      doc.text('✓ Full refund processed with NO DEDUCTION', margin + 5, yPos + 12);
-      doc.text(`✓ Refund Amount: Rs ${String(appointment.refundAmount || appointment.amount || 0)}`, margin + 5, yPos + 18);
+      doc.text('• Full refund processed with NO DEDUCTION', margin + 5, yPos + 12);
+      doc.text(`• Refund Amount: Rs ${String(appointment.refundAmount || appointment.amount || 0)}`, margin + 5, yPos + 18);
       
       if (appointment.cancellationReason) {
         doc.setFontSize(8);
