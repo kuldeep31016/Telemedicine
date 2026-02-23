@@ -5,6 +5,8 @@ const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
 const logger = require('../config/logger');
 const { createSuccessResponse, createErrorResponse } = require('../utils/response.util');
+const { sendAppointmentConfirmation } = require('../services/whatsapp.service');
+const { generateAndUploadInvoice } = require('../services/invoice.service');
 
 /**
  * Create Razorpay Order for Appointment Booking
@@ -20,7 +22,7 @@ exports.createAppointmentOrder = async (req, res) => {
 
     logger.debug(`[CreateOrder] Request data: doctorId=${doctorId}, amount=${amount}, consultationType=${consultationType}`);
 
-    // Validate required fields with specific error messages
+
     const missingFields = [];
     if (!doctorId) missingFields.push('doctorId');
     if (!amount) missingFields.push('amount');
@@ -311,12 +313,78 @@ exports.verifyPayment = async (req, res) => {
 
     logger.info(`[VerifyPayment] Appointment created successfully: ${appointment._id} for patient ${patientId} with doctor ${doctorId}`);
 
+    // Generate invoice PDF and send WhatsApp confirmation (non-blocking)
+    let whatsappSent = false;
+    let whatsappMessage = '';
+    let invoiceUrl = null;
+    
+    try {
+      // Step 1: Generate invoice PDF
+      logger.info('[VerifyPayment] Generating invoice PDF...');
+      const invoiceResult = await generateAndUploadInvoice({
+        appointmentId: appointment._id.toString(),
+        patientName: appointment.patientId.name,
+        patientEmail: appointment.patientId.email,
+        patientPhone: appointment.patientId.phone,
+        doctorName: appointment.doctorId.name,
+        doctorSpecialization: appointment.doctorId.specialization,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: appointment.appointmentTime,
+        consultationType: appointment.consultationType,
+        amount: appointment.amount,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        invoiceDate: new Date()
+      });
+
+      if (invoiceResult.success) {
+        logger.info(`[VerifyPayment] Invoice generated and uploaded: ${invoiceResult.url}`);
+        invoiceUrl = invoiceResult.url;
+      } else {
+        logger.warn(`[VerifyPayment] Invoice generation failed: ${invoiceResult.error}`);
+      }
+
+      // Step 2: Send WhatsApp confirmation with invoice
+      logger.info('[VerifyPayment] Sending WhatsApp confirmation...');
+      const whatsappResult = await sendAppointmentConfirmation({
+        patientName: appointment.patientId.name,
+        patientPhone: appointment.patientId.phone,
+        doctorName: appointment.doctorId.name,
+        doctorSpecialization: appointment.doctorId.specialization,
+        appointmentDate: appointment.appointmentDate,
+        appointmentTime: appointment.appointmentTime,
+        consultationType: appointment.consultationType,
+        appointmentId: appointment._id.toString(),
+        invoiceUrl: invoiceUrl // Attach invoice PDF to WhatsApp
+      });
+
+      if (whatsappResult.success) {
+        logger.info(`[VerifyPayment] WhatsApp confirmation sent successfully. SID: ${whatsappResult.messageSid}`);
+        whatsappSent = true;
+        whatsappMessage = invoiceUrl 
+          ? '📱 Check your WhatsApp for appointment confirmation and invoice PDF!' 
+          : '📱 Check your WhatsApp for appointment confirmation details!';
+      } else {
+        logger.warn(`[VerifyPayment] WhatsApp confirmation failed: ${whatsappResult.message || whatsappResult.error}`);
+        whatsappMessage = 'Appointment confirmed! (WhatsApp notification could not be sent)';
+      }
+    } catch (whatsappError) {
+      // Log but don't fail the request - WhatsApp is not critical
+      logger.error('[VerifyPayment] WhatsApp/Invoice notification error:', whatsappError);
+      whatsappMessage = 'Appointment confirmed successfully!';
+    }
+
     res.status(201).json(
       createSuccessResponse({
         success: true,
         appointmentId: appointment._id,
-        appointment
-      }, 'Payment verified and appointment created successfully')
+        appointment,
+        whatsappSent: whatsappSent,
+        invoiceUrl: invoiceUrl,
+        notification: whatsappMessage
+      }, whatsappSent ? 
+        'Appointment booked successfully! Check your WhatsApp for confirmation.' : 
+        'Appointment booked successfully!')
     );
   } catch (error) {
     logger.error('[VerifyPayment] Error occurred:', {
