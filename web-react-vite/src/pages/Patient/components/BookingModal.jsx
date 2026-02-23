@@ -26,7 +26,7 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
     consultationType: 'in-person'
   });
 
-  // Generate next 14 days (including today)
+
   const generateDates = () => {
     const dates = [];
     const today = new Date();
@@ -49,7 +49,6 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Time slots - 15 minute intervals
   const allTimeSlots = [
     '09:00 AM', '09:15 AM', '09:30 AM', '09:45 AM', '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM', 
     '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM',
@@ -63,7 +62,7 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
       if (bookingData.date && doctor?._id) {
         setLoadingSlots(true);
         try {
-          // Fetch booked slots for the selected doctor and date
+   
           const response = await patientAPI.getBookedSlots(doctor._id, bookingData.date);
           const booked = response.data?.bookedSlots || [];
           setBookedSlots(booked);
