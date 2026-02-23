@@ -55,10 +55,7 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
     '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM',
     '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '01:00 PM', '01:15 PM', '01:30 PM', '01:45 PM',
     '02:00 PM', '02:15 PM', '02:30 PM', '02:45 PM', '03:00 PM', '03:15 PM', '03:30 PM', '03:45 PM', 
-    '04:00 PM', '04:15 PM', '04:30 PM', '04:45 PM', '05:00 PM', '05:15 PM', '05:30 PM', '05:45 PM',
-    '06:00 PM', '06:15 PM', '06:30 PM', '06:45 PM', '07:00 PM', '07:15 PM', '07:30 PM', '07:45 PM',
-    '08:00 PM', '08:15 PM', '08:30 PM', '08:45 PM', '09:00 PM', '09:15 PM', '09:30 PM', '09:45 PM',
-    '10:00 PM', '10:15 PM', '10:30 PM', '10:45 PM', '11:00 PM', '11:15 PM', '11:30 PM', '11:45 PM'
+    '04:00 PM', '04:15 PM', '04:30 PM', '04:45 PM', '05:00 PM'
   ];
 
   useEffect(() => {
@@ -66,12 +63,12 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
       if (bookingData.date && doctor?._id) {
         setLoadingSlots(true);
         try {
-  
+          // Fetch booked slots for the selected doctor and date
           const response = await patientAPI.getBookedSlots(doctor._id, bookingData.date);
           const booked = response.data?.bookedSlots || [];
           setBookedSlots(booked);
           
-        
+          // Filter out booked slots from all time slots
           const available = allTimeSlots.filter(slot => !booked.includes(slot));
           setAvailableSlots(available);
           
@@ -79,7 +76,7 @@ const BookingModal = ({ isOpen, onClose, doctor, onConfirm }) => {
         } catch (error) {
           console.error('Error fetching booked slots:', error);
           toast.error('Failed to load available slots');
-         
+          // If there's an error, show all slots as available
           setAvailableSlots(allTimeSlots);
           setBookedSlots([]);
         } finally {
