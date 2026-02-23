@@ -20,7 +20,10 @@ const envSchema = Joi.object({
   UPLOAD_DIR: Joi.string().default('uploads'),
   WEBSOCKET_CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
   RAZORPAY_KEY_ID: Joi.string().required(),
-  RAZORPAY_KEY_SECRET: Joi.string().required()
+  RAZORPAY_KEY_SECRET: Joi.string().required(),
+  TWILIO_ACCOUNT_SID: Joi.string().optional().allow(''),
+  TWILIO_AUTH_TOKEN: Joi.string().optional().allow(''),
+  TWILIO_PHONE_NUMBER: Joi.string().optional().allow('')
 }).unknown();
 
 // Validate environment variables
