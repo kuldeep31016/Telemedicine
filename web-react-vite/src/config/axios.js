@@ -7,8 +7,8 @@ const api = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-  withCredentials: false, // Set to true if backend sends cookies
-  timeout: 30000, // 30 seconds timeout
+  withCredentials: false, 
+  timeout: 30000, 
 });
 
 
@@ -35,11 +35,11 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors globally
+
 api.interceptors.response.use(
   (response) => {
     console.log(`[API Response] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
-    // Return the full response object, not just data
+   
     return response;
   },
   async (error) => {
@@ -58,14 +58,14 @@ api.interceptors.response.use(
       try {
         const user = auth.currentUser;
         if (user) {
-          const token = await user.getIdToken(true); // Force refresh
+          const token = await user.getIdToken(true); 
           originalRequest.headers.Authorization = `Bearer ${token}`;
           console.log('[API] Token refreshed, retrying request');
           return api(originalRequest);
         }
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError);
-        // Only redirect if we're not already on a login page
+
         if (!window.location.pathname.includes('/login')) {
           console.log('[API] Redirecting to login...');
           window.location.href = '/login';
