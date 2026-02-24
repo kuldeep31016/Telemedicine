@@ -4,6 +4,79 @@ const logger = require('../config/logger');
 // Initialize email transporter
 let transporter = null;
 
+/**
+ * Generate iCalendar (.ics) file content for calendar invite
+ * @param {Object} data - Appointment details
+ * @returns {string} - iCalendar file content
+ */
+const generateICalendar = (data) => {
+  const { patientName, patientEmail, doctorName, doctorEmail, appointmentDate, appointmentTime, consultationType, appointmentId } = data;
+  
+  // Parse appointment date and time
+  const dateStr = new Date(appointmentDate).toISOString().split('T')[0];
+  const timeStr = convertTo24Hour(appointmentTime);
+  const startDateTime = new Date(`${dateStr}T${timeStr}:00`);
+  const endDateTime = new Date(startDateTime.getTime() + 30 * 60000); // 30 minutes
+  
+  // Format dates for iCalendar (YYYYMMDDTHHMMSSZ)
+  const formatICalDate = (date) => {
+    return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  };
+  
+  const now = new Date();
+  const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Doctify Telemedicine//Appointment//EN
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+UID:appointment-${appointmentId}@doctify.com
+DTSTAMP:${formatICalDate(now)}
+DTSTART:${formatICalDate(startDateTime)}
+DTEND:${formatICalDate(endDateTime)}
+SUMMARY:Medical Appointment: ${patientName} with Dr. ${doctorName}
+DESCRIPTION:Telemedicine Appointment\\n\\nPatient: ${patientName}\\nDoctor: Dr. ${doctorName}\\nType: ${consultationType === 'video' ? 'Video Consultation' : 'In-Person Consultation'}\\n\\nAppointment ID: ${appointmentId}
+LOCATION:${consultationType === 'video' ? 'Online - Video Call' : 'Clinic'}
+STATUS:CONFIRMED
+SEQUENCE:0
+ORGANIZER;CN=Doctify Telemedicine:mailto:${process.env.SMTP_USER}
+ATTENDEE;CN=${patientName};RSVP=TRUE:mailto:${patientEmail}
+ATTENDEE;CN=Dr. ${doctorName};RSVP=TRUE:mailto:${doctorEmail}
+BEGIN:VALARM
+TRIGGER:-PT24H
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Appointment in 24 hours
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT1H
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Appointment in 1 hour
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+  
+  return icsContent;
+};
+
+/**
+ * Convert 12-hour time format to 24-hour format
+ * @param {string} time12h - Time in 12-hour format (e.g., "09:00 AM")
+ * @returns {string} - Time in 24-hour format (e.g., "09:00")
+ */
+const convertTo24Hour = (time12h) => {
+  const [time, period] = time12h.split(' ');
+  let [hours, minutes] = time.split(':');
+  hours = parseInt(hours);
+  
+  if (period === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes}`;
+};
+
 const initializeEmailTransporter = () => {
   try {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -227,12 +300,27 @@ const sendAppointmentEmail = async (data) => {
       </html>
     `;
 
+    // Generate iCalendar file for calendar invite
+    const icsContent = generateICalendar(data);
+
     // Send email to patient
     const patientMailOptions = {
       from: `"Doctify Telemedicine" <${process.env.SMTP_USER}>`,
       to: patientEmail,
       subject: `✅ Appointment Confirmed - Dr. ${doctorName} on ${formattedDate}`,
-      html: patientEmailHTML
+      html: patientEmailHTML,
+      attachments: [
+        {
+          filename: 'appointment.ics',
+          content: icsContent,
+          contentType: 'text/calendar; charset=utf-8; method=REQUEST'
+        }
+      ],
+      icalEvent: {
+        filename: 'appointment.ics',
+        method: 'request',
+        content: icsContent
+      }
     };
 
     // Send email to doctor
@@ -240,7 +328,19 @@ const sendAppointmentEmail = async (data) => {
       from: `"Doctify Telemedicine" <${process.env.SMTP_USER}>`,
       to: doctorEmail,
       subject: `📅 New Appointment - ${patientName} on ${formattedDate}`,
-      html: doctorEmailHTML
+      html: doctorEmailHTML,
+      attachments: [
+        {
+          filename: 'appointment.ics',
+          content: icsContent,
+          contentType: 'text/calendar; charset=utf-8; method=REQUEST'
+        }
+      ],
+      icalEvent: {
+        filename: 'appointment.ics',
+        method: 'request',
+        content: icsContent
+      }
     };
 
     // Send both emails
