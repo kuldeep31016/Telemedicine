@@ -532,7 +532,7 @@ const MyAppointments = () => {
             <p className="text-slate-500 font-medium">Loading appointments...</p>
           </div>
         ) : (
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {currentAppointments.length > 0 ? (
               currentAppointments.map((appointment, index) => (
                 <motion.div
