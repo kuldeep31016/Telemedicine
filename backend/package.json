@@ -18,6 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.989.0",
     "@aws-sdk/s3-request-presigner": "^3.996.0",
+    "@google/generative-ai": "^0.24.1",
     "agora-access-token": "^2.0.4",
     "agora-token": "^2.0.5",
     "compression": "^1.7.4",
@@ -35,9 +36,11 @@
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.7",
+    "pdf-parse": "^2.4.5",
     "pdfkit": "^0.17.2",
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.3",
+    "tesseract.js": "^7.0.0",
     "twilio": "^4.23.0",
     "winston": "^3.11.0"
   },
