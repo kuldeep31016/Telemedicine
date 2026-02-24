@@ -34,6 +34,8 @@ import MedicalRecords from './pages/Patient/MedicalRecords';
 import BillsPayments from './pages/Patient/BillsPayments';
 import MyDoctors from './pages/Patient/MyDoctors';
 import Settings from './pages/Patient/Settings';
+import MedicalReportAnalysis from './pages/Patient/MedicalReportAnalysis';
+import MedicalHistory from './pages/Patient/MedicalHistory';
 import VideoConsultation from './pages/VideoConsultation/VideoConsultation';
 
 // Components
@@ -174,6 +176,8 @@ function App() {
           <Route path="find-doctors" element={<FindDoctors />} />
           <Route path="appointments" element={<MyAppointments />} />
           <Route path="medical-records" element={<MedicalRecords />} />
+          <Route path="medical-reports" element={<MedicalReportAnalysis />} />
+          <Route path="medical-history" element={<MedicalHistory />} />
           <Route path="bills-payments" element={<BillsPayments />} />
           <Route path="my-doctors" element={<MyDoctors />} />
           <Route path="settings" element={<Settings />} />
