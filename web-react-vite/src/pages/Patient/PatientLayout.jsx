@@ -12,7 +12,9 @@ import {
   LogOut,
   Bell,
   Heart,
-  X
+  X,
+  Sparkles,
+  Activity
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import { patientAPI } from '../../api/patient.api';
@@ -72,6 +74,8 @@ const PatientLayout = () => {
     { path: '/patient/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/patient/find-doctors', label: 'Find Doctors', icon: Search },
     { path: '/patient/appointments', label: 'My Appointments', icon: Calendar, badge: upcomingCount > 0 ? upcomingCount : null },
+    { path: '/patient/medical-reports', label: 'AI Report Analysis', icon: Sparkles },
+    { path: '/patient/medical-history', label: 'Medical History', icon: Activity },
     { path: '/patient/medical-records', label: 'Medical Records', icon: FileText },
     { path: '/patient/bills-payments', label: 'Bills & Payments', icon: CreditCard },
     { path: '/patient/my-doctors', label: 'My Doctors', icon: Stethoscope },
