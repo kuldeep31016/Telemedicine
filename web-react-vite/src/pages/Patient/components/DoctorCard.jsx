@@ -153,13 +153,15 @@ const DoctorCard = ({ doctor, onViewProfile, onBookAppointment }) => {
             <div className="px-5 pt-3 pb-5 border-t border-gray-100 space-y-3">
                 <div className="flex gap-3">
                     <button
-                        onClick={() => onBookAppointment(doctor)}
+                        type="button"
+                        onClick={() => onBookAppointment && onBookAppointment(doctor)}
                         className="flex-1 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors"
                     >
                         Book Appointment
                     </button>
                     <button
-                        onClick={() => onViewProfile(doctor)}
+                        type="button"
+                        onClick={() => onViewProfile && onViewProfile(doctor)}
                         className="flex-1 py-2.5 bg-white text-gray-700 text-sm font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                     >
                         View Profile
