@@ -121,20 +121,16 @@ For any queries, please contact our support team.
 
 _This is an automated message. Please do not reply._`;
 
-    // Format phone number for WhatsApp
     const formattedPhone = formatPhoneNumber(patientPhone);
     
     logger.info(`Sending WhatsApp confirmation to ${formattedPhone} for appointment ${appointmentId}`);
 
-    // Send WhatsApp message via Twilio
-    // Note: Twilio WhatsApp requires 'whatsapp:' prefix
     const messageOptions = {
       from: `whatsapp:${config.twilio.phoneNumber}`,
       to: `whatsapp:${formattedPhone}`,
       body: message
     };
 
-    // Add media URL if invoice is provided
     if (invoiceUrl) {
       messageOptions.mediaUrl = [invoiceUrl];
       logger.info(`Attaching invoice PDF: ${invoiceUrl}`);
@@ -157,8 +153,6 @@ _This is an automated message. Please do not reply._`;
       moreInfo: error.moreInfo
     });
 
-    // Don't throw error - just log it and return failure
-    // We don't want WhatsApp failure to break appointment creation
     return {
       success: false,
       error: error.message,
