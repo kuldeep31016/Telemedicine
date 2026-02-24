@@ -600,7 +600,11 @@ exports.cancelAppointment = async (req, res) => {
 
     // If doctor is cancelling, check 1 hour rule
     if (userRole === 'doctor' && appointment.doctorId.toString() === userId.toString()) {
-      const aptDateTime = new Date(appointment.appointmentDate);
+      // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+      const dateStr = appointment.appointmentDate.toISOString().split('T')[0];
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const aptDateTime = new Date(year, month - 1, day);
+      
       const timeMatch = appointment.appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
       if (timeMatch) {
         let hours = parseInt(timeMatch[1]);
@@ -751,7 +755,11 @@ exports.doctorRescheduleAppointment = async (req, res) => {
     }
 
     // Parse appointment date and time to check if within 1 hour
-    const aptDateTime = new Date(appointment.appointmentDate);
+    // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+    const dateStr = appointment.appointmentDate.toISOString().split('T')[0];
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const aptDateTime = new Date(year, month - 1, day);
+    
     const timeMatch = appointment.appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (timeMatch) {
       let hours = parseInt(timeMatch[1]);
