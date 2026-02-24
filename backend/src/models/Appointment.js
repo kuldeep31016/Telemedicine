@@ -99,6 +99,11 @@ const appointmentSchema = new mongoose.Schema({
     type: Number,
     default: 15 // Duration in minutes
   },
+  // Medical report reference (if appointment was booked based on report analysis)
+  relatedMedicalReport: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'MedicalReport'
+  },
   // Reschedule Request (Doctor initiated)
   rescheduleRequestedBy: {
     type: String,
