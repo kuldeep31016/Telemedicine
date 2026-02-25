@@ -39,7 +39,7 @@ export const generatePaymentReceipt = (appointmentData) => {
     doc.setFontSize(32);
     doc.setTextColor(37, 99, 235); // Blue
     doc.setFont('helvetica', 'bold');
-    doc.text('DOCTIFY - PAYMENT RECEIPT', pageWidth / 2, 30, { align: 'center' });
+    doc.text('Telemedicine - PAYMENT RECEIPT', pageWidth / 2, 30, { align: 'center' });
 
     // Divider line
     doc.setDrawColor(200, 200, 200);
@@ -290,7 +290,7 @@ export const generatePaymentReceipt = (appointmentData) => {
     doc.setFontSize(9);
     doc.text('This is a system-generated receipt. No signature required.', margin, yPos);
     yPos += 5;
-    doc.text('Support: support@doctify.com', margin, yPos);
+    doc.text('Support: support@Telemedicine.com', margin, yPos);
 
     // Invoice Number at bottom
     yPos = pageHeight - 20;
