@@ -17,11 +17,13 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useAuthStore from '../../store/authStore';
 
 const DashboardOverview = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -29,10 +31,9 @@ const DashboardOverview = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Mock data - replace with API calls
   const stats = [
     {
-      title: 'Upcoming Appointments',
+      title: t('dashboard.upcomingAppointments'),
       value: '2',
       icon: Calendar,
       iconColor: 'text-[#2563EB]',
@@ -48,7 +49,7 @@ const DashboardOverview = () => {
       change: '2 pending'
     },
     {
-      title: 'Active Prescriptions',
+      title: t('dashboard.activePrescriptions'),
       value: '3',
       icon: FileText,
       iconColor: 'text-[#16A34A]',
@@ -131,10 +132,10 @@ const DashboardOverview = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[28px] font-semibold text-[#0F172A] mb-1" style={{letterSpacing: '-0.3px'}}>
-            Welcome Back, {user?.name || 'Kuldeep Raj'}!
+            {t('dashboard.welcomeBack', { name: user?.name || 'Kuldeep Raj' })}
           </h1>
           <p className="text-[14px] text-[#64748B]">
-            Here's what's happening with your health today
+            {t('dashboard.happeningToday')}
           </p>
         </div>
         <button 
@@ -142,7 +143,7 @@ const DashboardOverview = () => {
           className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-[#2563EB] text-white rounded-lg font-medium hover:bg-[#1D4ED8] transition-all text-sm"
         >
           <Sparkles className="w-4 h-4" />
-          Quick Book
+          {t('dashboard.quickBook')}
         </button>
       </div>
 
@@ -234,7 +235,7 @@ const DashboardOverview = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-[#2563EB]" />
-            <h2 className="text-[18px] font-semibold text-[#0F172A]" style={{letterSpacing: '-0.3px'}}>Next Appointment</h2>
+            <h2 className="text-[18px] font-semibold text-[#0F172A]" style={{letterSpacing: '-0.3px'}}>{t('dashboard.nextAppointment')}</h2>
           </div>
           <span className="text-[12px] font-medium text-[#64748B] bg-[#F8FAFC] px-3 py-1 rounded-lg">
             Ref. No: {nextAppointment.refNo}
@@ -272,7 +273,7 @@ const DashboardOverview = () => {
                   <Calendar className="w-4 h-4 text-[#64748B]" />
                 </div>
                 <div>
-                  <p className="text-[12px] text-[#64748B] font-medium">Date</p>
+                  <p className="text-[12px] text-[#64748B] font-medium">{t('dashboard.date')}</p>
                   <p className="text-[14px] font-semibold text-[#0F172A]">{nextAppointment.date}</p>
                 </div>
               </div>
@@ -281,7 +282,7 @@ const DashboardOverview = () => {
                   <Clock className="w-4 h-4 text-[#64748B]" />
                 </div>
                 <div>
-                  <p className="text-[12px] text-[#64748B] font-medium">Time</p>
+                  <p className="text-[12px] text-[#64748B] font-medium">{t('dashboard.time')}</p>
                   <p className="text-[14px] font-semibold text-[#0F172A]">{nextAppointment.time}</p>
                 </div>
               </div>
@@ -296,10 +297,10 @@ const DashboardOverview = () => {
             <div className="flex items-center gap-3">
               <button className="flex-1 bg-[#2563EB] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[#1D4ED8] transition-all flex items-center justify-center gap-2 text-[14px]">
                 <Video className="w-4 h-4" />
-                Join / Reschedule
+                {t('dashboard.joinConsultation')}
               </button>
               <button className="px-5 py-2.5 border border-[#E2E8F0] text-[#64748B] rounded-lg font-medium hover:bg-[#F8FAFC] transition-all text-[14px]">
-                Cancel
+                {t('dashboard.cancel')}
               </button>
             </div>
           </div>
@@ -317,9 +318,9 @@ const DashboardOverview = () => {
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[18px] font-semibold text-[#0F172A]" style={{letterSpacing: '-0.3px'}}>Recent Medical Record</h2>
+            <h2 className="text-[18px] font-semibold text-[#0F172A]" style={{letterSpacing: '-0.3px'}}>{t('dashboard.recentMedicalRecord')}</h2>
             <button className="text-[#2563EB] font-medium text-[14px] hover:text-[#1D4ED8]">
-              View Record
+              {t('dashboard.viewRecord')}
             </button>
           </div>
           <div className="flex items-center gap-4 p-4 bg-[#F8FAFC] rounded-lg">
@@ -351,7 +352,7 @@ const DashboardOverview = () => {
           style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[18px] font-semibold text-[#0F172A]" style={{letterSpacing: '-0.3px'}}>Health Reminders</h2>
+            <h2 className="text-[18px] font-semibold text-[#0F172A]" style={{letterSpacing: '-0.3px'}}>{t('dashboard.healthReminders')}</h2>
           </div>
           <div className="space-y-3">
             <div className="flex items-start gap-3 p-3 bg-[#F8FAFC] rounded-lg">
@@ -364,7 +365,7 @@ const DashboardOverview = () => {
               </div>
             </div>
             <button className="w-full px-4 py-2.5 bg-[#2563EB] text-white rounded-lg font-medium hover:bg-[#1D4ED8] transition-all text-[14px]">
-              Book Appointment
+              {t('dashboard.bookAppointment')}
             </button>
           </div>
         </motion.div>
