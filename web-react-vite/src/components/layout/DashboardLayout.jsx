@@ -93,7 +93,7 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
           <LocalHospital sx={{ color: 'white' }} />
         </Avatar>
         <Typography variant="h6" fontWeight="bold" sx={{ color: 'white' }}>
-          ProvoHeal
+          Telemedicine
         </Typography>
       </Box>
 
