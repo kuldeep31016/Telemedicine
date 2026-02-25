@@ -30,7 +30,7 @@ PRODID:-//Doctify Telemedicine//Appointment//EN
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 BEGIN:VEVENT
-UID:appointment-${appointmentId}@doctify.com
+UID:appointment-${appointmentId}@Telemedicine.com
 DTSTAMP:${formatICalDate(now)}
 DTSTART:${formatICalDate(startDateTime)}
 DTEND:${formatICalDate(endDateTime)}
@@ -210,8 +210,8 @@ const sendAppointmentEmail = async (data) => {
             </p>
 
             <div class="footer">
-              <p>Thank you for choosing Doctify Telemedicine Platform</p>
-              <p>For any queries, contact us at support@doctify.com</p>
+              <p>Thank you for choosing Telemedicine Platform</p>
+              <p>For any queries, contact us at support@Telemedicine.com</p>
             </div>
           </div>
         </div>
@@ -291,8 +291,8 @@ const sendAppointmentEmail = async (data) => {
             </p>
 
             <div class="footer">
-              <p>Doctify Telemedicine Platform</p>
-              <p>For technical support, contact support@doctify.com</p>
+              <p>Telemedicine Platform</p>
+              <p>For technical support, contact support@Telemedicine.com</p>
             </div>
           </div>
         </div>
@@ -305,7 +305,7 @@ const sendAppointmentEmail = async (data) => {
 
     // Send email to patient
     const patientMailOptions = {
-      from: `"Doctify Telemedicine" <${process.env.SMTP_USER}>`,
+      from: `"Telemedicine Platform" <${process.env.SMTP_USER}>`,
       to: patientEmail,
       subject: `✅ Appointment Confirmed - Dr. ${doctorName} on ${formattedDate}`,
       html: patientEmailHTML,
@@ -325,7 +325,7 @@ const sendAppointmentEmail = async (data) => {
 
     // Send email to doctor
     const doctorMailOptions = {
-      from: `"Doctify Telemedicine" <${process.env.SMTP_USER}>`,
+      from: `"Telemedicine Platform" <${process.env.SMTP_USER}>`,
       to: doctorEmail,
       subject: `📅 New Appointment - ${patientName} on ${formattedDate}`,
       html: doctorEmailHTML,
