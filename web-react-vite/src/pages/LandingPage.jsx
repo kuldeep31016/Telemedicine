@@ -167,7 +167,7 @@ const LandingPage = () => {
               <span className="text-white text-xl">◌</span>
             </div>
             <span className="text-2xl font-bold tracking-tight text-[#1A1A1A]">
-              Doctify
+              Telemedicine
             </span>
           </div>
 
@@ -240,7 +240,7 @@ const LandingPage = () => {
             </h1>
 
             <p className="text-base text-gray-600 mb-6 leading-relaxed max-w-lg">
-              Whether in person or online, Doctify connects you with certified,
+              Whether in person or online, Telemedicine connects you with certified,
               compassionate healthcare professionals — quickly, safely, and effortlessly.
             </p>
 
@@ -380,7 +380,7 @@ const LandingPage = () => {
               <span className="text-white text-xs">◌</span>
             </div>
             <span className="text-xl font-bold tracking-tight text-[#1A1A1A]">
-              Doctify
+              Telemedicine
             </span>
           </div>
 
@@ -392,7 +392,7 @@ const LandingPage = () => {
           </div>
 
           <p className="text-gray-300 text-sm font-medium">
-            © 2026 Doctify. Premium Medical Solutions.
+            © 2026 Telemedicine. Premium Medical Solutions.
           </p>
         </div>
       </footer>
@@ -441,7 +441,7 @@ const LandingPage = () => {
                 required
                 value={adminForm.email}
                 onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
-                placeholder="admin@doctify.com"
+                placeholder="admin@Telemedicine.com"
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#6C5DD3] focus:outline-none transition-colors"
               />
             </div>
@@ -509,7 +509,7 @@ const LandingPage = () => {
             <p className="text-sm text-gray-500">
               Need help? Contact{' '}
               <a href="#" className="text-[#6C5DD3] font-semibold">
-                support@doctify.com
+                support@Telemedicine.com
               </a>
             </p>
           </div>
@@ -620,7 +620,7 @@ const LandingPage = () => {
                 required
                 value={doctorForm.email}
                 onChange={(e) => setDoctorForm({ ...doctorForm, email: e.target.value })}
-                placeholder="doctor@doctify.com"
+                placeholder="doctor@Telemedicine.com"
                 className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-[#6C5DD3] focus:outline-none transition-colors"
               />
             </div>
@@ -688,7 +688,7 @@ const LandingPage = () => {
             <p className="text-sm text-gray-500">
               Need help? Contact{' '}
               <a href="#" className="text-[#6C5DD3] font-semibold">
-                support@doctify.com
+                support@Telemedicine.com
               </a>
             </p>
           </div>
