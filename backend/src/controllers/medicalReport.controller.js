@@ -569,7 +569,7 @@ exports.reanalyzeReport = async (req, res) => {
             return errorResponse(res, 'Report is not yet processed', 400);
         }
         
-        // Re-analyze
+        
         const result = await reAnalyzeReport(reportId);
         
         logger.info(`Report ${reportId} re-analyzed by patient ${patientId}`);
@@ -582,5 +582,83 @@ exports.reanalyzeReport = async (req, res) => {
     } catch (error) {
         logger.error('Error re-analyzing report:', error);
         return errorResponse(res, error.message || 'Failed to re-analyze report', 500);
+    }
+};
+
+/**
+ * Analyze symptoms from voice/text input
+ * POST /api/medical-reports/analyze-symptoms
+ */
+exports.analyzeSymptoms = async (req, res) => {
+    try {
+        const { symptoms, language } = req.body;
+        const patientId = req.user._id;
+        
+        if (!symptoms || symptoms.trim().length < 10) {
+            return errorResponse(res, 'Please provide detailed symptoms (at least 10 characters)', 400);
+        }
+        
+        logger.info(`Analyzing symptoms for patient ${patientId} in language: ${language || 'en'}`);
+        
+        const { analyzeWithGemini } = require('../services/geminiAnalysis.service');
+        
+        const contextualSymptoms = `Patient is describing their current health symptoms:\n\n${symptoms}\n\nLanguage: ${language || 'English'}`;
+        
+        const geminiResult = await analyzeWithGemini(contextualSymptoms);
+        
+        if (!geminiResult.success) {
+            logger.warn('Gemini analysis failed, using fallback');
+            return errorResponse(res, 'Unable to analyze symptoms. Please try again or consult a doctor directly.', 500);
+        }
+        
+        const recommendedSpecialists = geminiResult.recommendations || [];
+        
+        if (recommendedSpecialists.length === 0) {
+            recommendedSpecialists.push({
+                specialty: 'General Physician',
+                confidence: 70,
+                reason: 'For a comprehensive health evaluation based on your symptoms'
+            });
+        }
+        
+        const doctorsBySpecialty = {};
+        
+        for (const specialist of recommendedSpecialists) {
+            try {
+                const doctors = await Doctor.find({
+                    specialization: specialist.specialty,
+                    isActive: true
+                })
+                .select('name specialization qualifications experience consultationFee hourlyRate rating reviewCount profileImage availability hospitalName location hospitalAddress')
+                .sort({ rating: -1, experience: -1 })
+                .limit(5);
+                
+                if (doctors.length > 0) {
+                    doctorsBySpecialty[specialist.specialty] = doctors;
+                }
+            } catch (err) {
+                logger.error(`Error fetching doctors for ${specialist.specialty}:`, err);
+            }
+        }
+        
+        logger.info(`Voice analysis completed for patient ${patientId}. Recommended: ${recommendedSpecialists.map(s => s.specialty).join(', ')}`);
+        
+        return successResponse(res, {
+            message: 'Symptoms analyzed successfully',
+            analysis: {
+                detectedConditions: geminiResult.detectedConditions || [],
+                symptoms: geminiResult.symptoms || [],
+                bodyParts: geminiResult.bodyParts || [],
+                keywords: geminiResult.keywords || [],
+                summary: geminiResult.summary || 'Analysis completed',
+                recommendedSpecialists,
+                language: language || 'en'
+            },
+            doctors: doctorsBySpecialty
+        });
+        
+    } catch (error) {
+        logger.error('Error analyzing symptoms:', error);
+        return errorResponse(res, 'Failed to analyze symptoms. Please try again.', 500);
     }
 };
