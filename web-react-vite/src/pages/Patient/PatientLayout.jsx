@@ -14,12 +14,16 @@ import {
   Heart,
   X,
   Sparkles,
-  Activity
+  Activity,
+  Mic
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import useAuthStore from '../../store/authStore';
 import { patientAPI } from '../../api/patient.api';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import LanguageSelector from '../../components/common/LanguageSelector';
+import '../../i18n';
 
 const PatientLayout = () => {
   const { user, logout } = useAuthStore();
@@ -27,6 +31,7 @@ const PatientLayout = () => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [upcomingCount, setUpcomingCount] = useState(0);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchUpcomingAppointments();
@@ -71,15 +76,16 @@ const PatientLayout = () => {
   };
 
   const menuItems = [
-    { path: '/patient/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/patient/find-doctors', label: 'Find Doctors', icon: Search },
-    { path: '/patient/appointments', label: 'My Appointments', icon: Calendar, badge: upcomingCount > 0 ? upcomingCount : null },
-    { path: '/patient/medical-reports', label: 'AI Report Analysis', icon: Sparkles },
-    { path: '/patient/medical-history', label: 'Medical History', icon: Activity },
-    { path: '/patient/medical-records', label: 'Medical Records', icon: FileText },
-    { path: '/patient/bills-payments', label: 'Bills & Payments', icon: CreditCard },
-    { path: '/patient/my-doctors', label: 'My Doctors', icon: Stethoscope },
-    { path: '/patient/settings', label: 'Settings', icon: Settings },
+    { path: '/patient/dashboard', label: t('common.dashboard'), icon: LayoutDashboard },
+    { path: '/patient/find-doctors', label: t('common.findDoctors'), icon: Search },
+    { path: '/patient/appointments', label: t('common.myAppointments'), icon: Calendar, badge: upcomingCount > 0 ? upcomingCount : null },
+    { path: '/patient/medical-reports', label: t('common.aiReportAnalysis'), icon: Sparkles },
+    { path: '/patient/voice-symptoms', label: t('common.voiceSymptomChecker'), icon: Mic },
+    { path: '/patient/medical-history', label: t('common.medicalHistory'), icon: Activity },
+    { path: '/patient/medical-records', label: t('common.medicalRecords'), icon: FileText },
+    { path: '/patient/bills-payments', label: t('common.billsPayments'), icon: CreditCard },
+    { path: '/patient/my-doctors', label: t('common.myDoctors'), icon: Stethoscope },
+    { path: '/patient/settings', label: t('common.settings'), icon: Settings },
   ];
 
   const handleLogout = async () => {
@@ -103,7 +109,7 @@ const PatientLayout = () => {
               <div className="w-10 h-10 bg-[#2563EB] rounded-lg flex items-center justify-center">
                 <Heart className="text-white w-5 h-5" fill="white" />
               </div>
-              <span className="text-xl font-semibold tracking-tight text-white" style={{letterSpacing: '-0.3px'}}>Telemedicine</span>
+              <span className="text-xl font-semibold tracking-tight text-white" style={{letterSpacing: '-0.3px'}}>{t('common.telemedicine')}</span>
             </div>
           </div>
 
@@ -157,7 +163,7 @@ const PatientLayout = () => {
               className="w-full flex items-center gap-3 px-3 py-2.5 text-[#DC2626] hover:bg-[#1E293B] rounded-lg transition-colors group"
             >
               <LogOut className="w-4 h-4" />
-              <span className="text-sm font-medium">Logout</span>
+              <span className="text-sm font-medium">{t('common.logout')}</span>
             </button>
           </div>
         </div>
@@ -180,15 +186,12 @@ const PatientLayout = () => {
             </div>
 
             <div className="flex items-center gap-6">
-              <button className="text-[#64748B] hover:text-[#0F172A] transition-colors relative">
-                <Bell size={18} />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#DC2626] rounded-full border-2 border-white"></span>
-              </button>
+              <LanguageSelector />
               <div className="h-5 w-[1px] bg-[#E2E8F0]"></div>
               <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block">
                   <p className="text-[10px] font-medium text-[#64748B] uppercase tracking-wider leading-none mb-1">
-                    Welcome Back
+                    {t('common.welcome')}
                   </p>
                   <p className="text-sm font-semibold text-[#0F172A] leading-none" style={{letterSpacing: '-0.3px'}}>
                     {user?.name || 'Kuldeep Raj'}
