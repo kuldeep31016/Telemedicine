@@ -15,7 +15,9 @@ import {
   X,
   Sparkles,
   Activity,
-  Mic
+  Mic,
+  Pill,
+  ShoppingBag
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import useAuthStore from '../../store/authStore';
@@ -44,12 +46,10 @@ const PatientLayout = () => {
       if (response && response.success) {
         const allAppointments = response.data?.appointments || [];
         
-        // Count upcoming appointments (future appointments with scheduled status)
         const now = new Date();
         const upcoming = allAppointments.filter(apt => {
           const aptDate = new Date(apt.appointmentDate);
           
-          // Parse time if available
           if (apt.appointmentTime) {
             const timeMatch = apt.appointmentTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
             if (timeMatch) {
@@ -71,7 +71,6 @@ const PatientLayout = () => {
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      // Don't show error toast, just fail silently
     }
   };
 
@@ -83,6 +82,8 @@ const PatientLayout = () => {
     { path: '/patient/voice-symptoms', label: t('common.voiceSymptomChecker'), icon: Mic },
     { path: '/patient/medical-history', label: t('common.medicalHistory'), icon: Activity },
     { path: '/patient/medical-records', label: t('common.medicalRecords'), icon: FileText },
+    { path: '/patient/prescriptions', label: 'Prescriptions', icon: Pill },
+    { path: '/patient/get-medicine', label: 'Get Your Medicine', icon: ShoppingBag },
     { path: '/patient/bills-payments', label: t('common.billsPayments'), icon: CreditCard },
     { path: '/patient/my-doctors', label: t('common.myDoctors'), icon: Stethoscope },
     { path: '/patient/settings', label: t('common.settings'), icon: Settings },
@@ -91,10 +92,10 @@ const PatientLayout = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
-      toast.success('Logged out successfully');
+      window.location.href = '/';
     } catch (error) {
-      toast.error('Logout failed');
+      console.error('Logout error:', error);
+      window.location.href = '/';
     }
   };
 
