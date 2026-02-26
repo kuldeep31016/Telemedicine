@@ -107,10 +107,11 @@ const PatientDashboard = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
-      toast.success('Logged out successfully');
+      // Use hard navigation to completely bypass React Router
+      window.location.href = '/';
     } catch (error) {
-      toast.error('Logout failed');
+      console.error('Logout error:', error);
+      window.location.href = '/';
     }
   };
 
