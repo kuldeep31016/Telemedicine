@@ -98,6 +98,24 @@ const doctorSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    approvalStatus: {
+        type: String,
+        enum: ['PENDING', 'APPROVED', 'REJECTED'],
+        default: 'PENDING'
+    },
+    rejectionReason: {
+        type: String,
+        default: ''
+    },
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+        default: null
+    },
+    approvedAt: {
+        type: Date,
+        default: null
+    },
     lastLogin: Date
 }, {
     timestamps: true
