@@ -26,17 +26,20 @@ import PatientsManagement from './pages/Admin/PatientsManagement';
 import DoctorDashboard from './pages/Doctor/Dashboard';
 import DoctorProfilePage from './pages/Doctor/Profile';
 import DoctorAppointments from './pages/Doctor/Appointments';
+import DoctorPrescriptions from './pages/Doctor/Prescriptions';
 import PatientLayout from './pages/Patient/PatientLayout';
 import DashboardOverview from './pages/Patient/DashboardOverview';
 import FindDoctors from './pages/Patient/FindDoctors';
 import MyAppointments from './pages/Patient/MyAppointments';
 import MedicalRecords from './pages/Patient/MedicalRecords';
+import PatientPrescriptions from './pages/Patient/Prescriptions';
 import BillsPayments from './pages/Patient/BillsPayments';
 import MyDoctors from './pages/Patient/MyDoctors';
 import Settings from './pages/Patient/Settings';
 import MedicalReportAnalysis from './pages/Patient/MedicalReportAnalysis';
 import MedicalHistory from './pages/Patient/MedicalHistory';
 import VoiceSymptoms from './pages/Patient/VoiceSymptoms';
+import NearbyPharmacy from './pages/Patient/NearbyPharmacy';
 import VideoConsultation from './pages/VideoConsultation/VideoConsultation';
 
 // Components
@@ -161,6 +164,11 @@ function App() {
             <DoctorProfilePage />
           </ProtectedRoute>
         } />
+        <Route path="/doctor/prescriptions" element={
+          <ProtectedRoute allowedRoles={['doctor']}>
+            <DoctorPrescriptions />
+          </ProtectedRoute>
+        } />
         <Route path="/doctor/consultation/:appointmentId" element={
           <ProtectedRoute allowedRoles={['doctor']}>
             <VideoConsultation />
@@ -177,6 +185,8 @@ function App() {
           <Route path="find-doctors" element={<FindDoctors />} />
           <Route path="appointments" element={<MyAppointments />} />
           <Route path="medical-records" element={<MedicalRecords />} />
+          <Route path="prescriptions" element={<PatientPrescriptions />} />
+          <Route path="get-medicine" element={<NearbyPharmacy />} />
           <Route path="medical-reports" element={<MedicalReportAnalysis />} />
           <Route path="voice-symptoms" element={<VoiceSymptoms />} />
           <Route path="medical-history" element={<MedicalHistory />} />
