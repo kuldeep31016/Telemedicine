@@ -334,7 +334,7 @@ const LandingPage = () => {
       </div>
 
       {/* Partners/Trust Section */}
-      <section class="py-20 px-10 mt-10 relative z-0">
+      <section className="py-20 px-10 mt-10 relative z-0">
         <div className="max-w-[1440px] mx-auto">
           <p className="text-center text-gray-400 font-bold uppercase tracking-[0.2em] mb-12">Trusted by 5000+ medical institutions globally</p>
           <div className="flex flex-wrap justify-between items-center opacity-30 grayscale gap-10">
