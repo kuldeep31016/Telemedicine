@@ -177,8 +177,8 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
       <AppBar
         position="fixed"
         sx={{
-          width: { lg: `calc(100% - ${open ? drawerWidth : 0}px)` },
-          ml: { lg: `${open ? drawerWidth : 0}px` },
+          width: { lg: open ? `calc(100% - ${drawerWidth}px)` : '100%' },
+          ml: { lg: open ? `${drawerWidth}px` : 0 },
           bgcolor: 'white',
           color: 'text.primary',
           boxShadow: 'none',
@@ -284,11 +284,7 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
         component="nav"
         sx={{
           width: { lg: open ? drawerWidth : 0 },
-          flexShrink: { lg: 0 },
-          transition: theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
+          flexShrink: 0,
         }}
       >
         <Drawer
@@ -297,14 +293,12 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
           onClose={handleDrawerToggle}
           ModalProps={{ keepMounted: true }}
           sx={{
+            width: drawerWidth,
+            flexShrink: 0,
             '& .MuiDrawer-paper': {
               width: drawerWidth,
               boxSizing: 'border-box',
               border: 'none',
-              transition: theme.transitions.create('width', {
-                easing: theme.transitions.easing.sharp,
-                duration: theme.transitions.duration.enteringScreen,
-              }),
             },
           }}
         >
@@ -316,16 +310,16 @@ const DashboardLayout = ({ children, menuItems = [] }) => {
         component="main"
         sx={{
           flexGrow: 1,
-          flexBasis: 0,
-          minWidth: 0,
+          width: '100%',
           p: 0,
           mt: 8,
           minHeight: '100vh',
-          overflow: 'hidden',
-          transition: theme.transitions.create(['margin', 'width'], {
+          overflow: 'auto',
+          transition: theme.transitions.create('margin', {
             easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
+            duration: theme.transitions.duration.leavingScreen,
           }),
+          ml: { lg: open ? 0 : `-${drawerWidth}px` },
         }}
       >
         {children}
