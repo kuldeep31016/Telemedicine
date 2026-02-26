@@ -15,6 +15,7 @@ const useAuthStore = create((set, get) => ({
       firebaseUser: null,
       loading: true,
       error: null,
+      isLoggingOut: false, // Track logout state
 
       // Initialize auth listener
       initializeAuth: () => {
@@ -169,21 +170,34 @@ const useAuthStore = create((set, get) => ({
 
       // Logout user
       logout: async () => {
-        set({ loading: true });
+        set({ isLoggingOut: true });
         try {
-          await authAPI.logout();
-          await signOut(auth);
+          // Perform cleanup
+          await authAPI.logout().catch(() => {}); // Ignore errors
+          await signOut(auth).catch(() => {}); // Ignore errors
+          localStorage.removeItem('nearbyMedicalCache'); // clear pharmacy cache on logout
+          
+          // Clear state
           set({
             user: null,
             firebaseUser: null,
             loading: false,
+            isLoggingOut: false,
             error: null,
           });
+          
           toast.success('Logged out successfully');
+          return true;
         } catch (error) {
           console.error('Logout error:', error);
-          set({ loading: false });
-          toast.error('Logout failed');
+          // Even if logout fails, clear the state
+          set({ 
+            user: null,
+            firebaseUser: null,
+            loading: false,
+            isLoggingOut: false,
+          });
+          return true;
         }
       },
 
