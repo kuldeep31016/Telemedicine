@@ -58,6 +58,7 @@ import {
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { adminAPI } from '../../api/admin.api';
+import { adminMenuItems } from '../../constants/adminMenuItems';
 
 const AdminAppointments = () => {
   const [loading, setLoading] = useState(true);
@@ -75,17 +76,6 @@ const AdminAppointments = () => {
   // Pagination
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(10);
-
-  // Sidebar menu items
-  const menuItems = [
-    { path: '/admin/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { path: '/admin/appointments', label: 'Appointments', icon: <CalendarToday /> },
-    { path: '/admin/patients', label: 'Patients', icon: <People /> },
-    { path: '/admin/doctors', label: 'Doctors', icon: <LocalHospital /> },
-    { path: '/admin/consultations', label: 'Consultations', icon: <VideoCall /> },
-    { path: '/admin/prescriptions', label: 'Prescriptions', icon: <Medication /> },
-    { path: '/admin/reports', label: 'Reports', icon: <Description /> },
-  ];
 
   useEffect(() => {
     fetchAppointments();
@@ -193,7 +183,7 @@ const AdminAppointments = () => {
   );
 
   return (
-    <DashboardLayout menuItems={menuItems} userRole="admin">
+    <DashboardLayout menuItems={adminMenuItems} userRole="admin">
       <Box sx={{ p: 3 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
