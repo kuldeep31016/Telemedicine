@@ -1191,7 +1191,7 @@ const LandingPage = () => {
                   { label: "About", id: "about" },
                   { label: "Services", id: "services" },
                   { label: "Doctors", id: "doctors" },
-                  { label: "Careers", id: null },
+                  { label: "How It Works", id: "how-it-works" },
                 ].map(({ label, id }) => (
                   <li key={label}>
                     <button
@@ -1807,9 +1807,9 @@ const LandingPage = () => {
               For privacy-related inquiries, please contact our Data Protection
               Officer at{" "}
               <span className="text-[#6C5DD3] font-semibold">
-                privacy@telemedicine.com
+                soonlay.tech@gmail.com
               </span>{" "}
-              or call +1 (800) 123-4567.
+              or call +91 9508874235.
             </p>
           </div>
         </div>
@@ -1960,7 +1960,7 @@ const LandingPage = () => {
             <p>
               Questions regarding these Terms may be directed to{" "}
               <span className="text-[#6C5DD3] font-semibold">
-                legal@telemedicine.com
+                soonlay.tech@gmail.com
               </span>
               .
             </p>
@@ -2103,7 +2103,7 @@ const LandingPage = () => {
               If you discover a security vulnerability, please report it
               responsibly to our security team at{" "}
               <span className="text-[#6C5DD3] font-semibold">
-                security@telemedicine.com
+                soonlay.tech@gmail.com
               </span>
               . We take all reports seriously and aim to respond within 24
               hours.
