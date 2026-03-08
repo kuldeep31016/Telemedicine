@@ -1,13 +1,12 @@
 {
-    "watch": [
-        "src",
-        "server.js"
-    ],
-    "ext": "js,json",
-    "ignore": [
-        "logs/*",
-        "node_modules/*",
-        "uploads/*"
-    ],
-    "exec": "node"
+  "watch": ["server.js", "src"],
+  "ext": "js,json",
+  "ignore": [
+    "node_modules",
+    "logs",
+    "uploads",
+    "*.log",
+    "*.pdf"
+  ],
+  "exec": "node server.js"
 }
