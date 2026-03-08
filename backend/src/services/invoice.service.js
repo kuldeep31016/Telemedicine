@@ -164,7 +164,7 @@ const generateInvoicePDF = async (invoiceData) => {
         .text('Thank you for choosing Telemedicine!', 50, footerY + 15, { align: 'center', width: 495 });
       
       doc.fontSize(8)
-        .text('For any queries, please contact: support@Telemedicine.com | +91-9508874235', 50, footerY + 30, { 
+        .text('For any queries, please contact: soonlay.tech@gmail.com | +91-9508874235', 50, footerY + 30, { 
           align: 'center', 
           width: 495 
         });
