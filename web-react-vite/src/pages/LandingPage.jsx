@@ -59,6 +59,9 @@ const LandingPage = () => {
   const [scrolled, setScrolled] = useState(false);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showDoctorModal, setShowDoctorModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [adminMode, setAdminMode] = useState('login');
   const [doctorMode, setDoctorMode] = useState('login');
 
@@ -966,10 +969,14 @@ const LandingPage = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-5">
             <p className="text-white/40 text-sm">© 2026 Telemedicine. All rights reserved.</p>
             <div className="flex items-center gap-2 text-sm">
-              {['Privacy Policy', 'Terms', 'Security'].map((item, i) => (
-                <React.Fragment key={item}>
+              {[
+                { label: 'Privacy Policy', action: () => setShowPrivacyModal(true) },
+                { label: 'Terms', action: () => setShowTermsModal(true) },
+                { label: 'Security', action: () => setShowSecurityModal(true) },
+              ].map(({ label, action }, i) => (
+                <React.Fragment key={label}>
                   {i > 0 && <span className="text-white/20">•</span>}
-                  <button className="text-white/80 hover:text-white transition-colors">{item}</button>
+                  <button onClick={action} className="text-white/80 hover:text-white transition-colors">{label}</button>
                 </React.Fragment>
               ))}
             </div>
@@ -1151,6 +1158,199 @@ const LandingPage = () => {
           </div>
         </form>
       </Modal>
+
+      {/* ─── PRIVACY POLICY MODAL ─── */}
+      <Modal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} title="Privacy Policy" size="lg">
+        <div className="space-y-6 text-sm text-gray-600 leading-relaxed">
+          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Last updated: March 1, 2026</p>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">1. Introduction</h3>
+            <p>Telemedicine Platform ("we", "our", or "us") is committed to protecting your personal health information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our telemedicine services, website, and mobile application.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">2. Information We Collect</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>Personal Identifiers:</strong> Name, email address, phone number, date of birth, and profile photo.</li>
+              <li><strong>Medical Information:</strong> Symptoms, medical history, prescriptions, lab results, diagnoses, and consultation notes.</li>
+              <li><strong>Payment Information:</strong> Billing address and transaction records (card details are processed by our payment provider and not stored on our servers).</li>
+              <li><strong>Device & Usage Data:</strong> IP address, browser type, device identifiers, pages visited, and session duration for platform improvement.</li>
+              <li><strong>Communications:</strong> Messages exchanged with doctors, support tickets, and contact form submissions.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">3. How We Use Your Information</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Facilitate appointments between patients and licensed healthcare providers.</li>
+              <li>Generate and deliver digital prescriptions and medical records.</li>
+              <li>Send appointment confirmations, reminders, and health updates via email or SMS.</li>
+              <li>Process payments and issue invoices.</li>
+              <li>Improve and personalise the platform experience.</li>
+              <li>Comply with applicable healthcare laws and regulations, including HIPAA.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">4. HIPAA Compliance</h3>
+            <p>We are fully compliant with the Health Insurance Portability and Accountability Act (HIPAA). All Protected Health Information (PHI) is encrypted at rest and in transit. We enter into Business Associate Agreements (BAAs) with all third-party service providers who handle PHI on our behalf.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">5. Sharing of Information</h3>
+            <p>We do not sell, rent, or trade your personal or medical information. We may share data only in the following limited circumstances:</p>
+            <ul className="list-disc pl-5 space-y-1 mt-2">
+              <li>With the treating physician or healthcare professional for your consultation.</li>
+              <li>With laboratories or pharmacies when a prescription or test order is issued.</li>
+              <li>With payment processors strictly for transaction processing.</li>
+              <li>When required by law, court order, or to protect the safety of individuals.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">6. Data Retention</h3>
+            <p>Medical records and consultation history are retained for a minimum of 7 years in accordance with healthcare regulations. You may request deletion of non-medical personal data at any time by contacting us at support@telemedicine.com.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">7. Your Rights</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Access and download your personal data and medical records.</li>
+              <li>Correct inaccurate or incomplete information in your profile.</li>
+              <li>Withdraw consent for non-essential data processing at any time.</li>
+              <li>Lodge a complaint with your national data protection authority.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">8. Contact Us</h3>
+            <p>For privacy-related inquiries, please contact our Data Protection Officer at <span className="text-[#6C5DD3] font-semibold">privacy@telemedicine.com</span> or call +1 (800) 123-4567.</p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ─── TERMS OF SERVICE MODAL ─── */}
+      <Modal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} title="Terms of Service" size="lg">
+        <div className="space-y-6 text-sm text-gray-600 leading-relaxed">
+          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Last updated: March 1, 2026</p>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">1. Acceptance of Terms</h3>
+            <p>By accessing or using Telemedicine Platform, you agree to be bound by these Terms of Service and our Privacy Policy. If you do not agree, please discontinue use of the platform immediately.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">2. Eligibility</h3>
+            <p>You must be at least 18 years of age to create an account. Minors may use the platform only with a parent or legal guardian serving as the account holder and consenting to all consultations on their behalf.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">3. Nature of Services</h3>
+            <p>Telemedicine Platform provides a technology infrastructure that connects patients with independently licensed healthcare professionals. We do not employ doctors directly. All medical decisions, diagnoses, and treatment recommendations are made solely by the licensed practitioner conducting the consultation.</p>
+            <p className="mt-2 font-semibold text-gray-700">This platform is not intended for medical emergencies. In case of a life-threatening emergency, call 911 or your local emergency number immediately.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">4. User Responsibilities</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Provide accurate, complete, and up-to-date personal and medical information.</li>
+              <li>Keep your account credentials confidential and notify us immediately of any unauthorised access.</li>
+              <li>Use the platform only for lawful purposes and not to engage in any fraudulent or abusive behaviour.</li>
+              <li>Attend scheduled appointments on time; repeated no-shows may result in account suspension.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">5. Appointments & Cancellations</h3>
+            <p>You may cancel or reschedule an appointment at no charge up to 24 hours before the scheduled time. Cancellations made within 24 hours may incur a cancellation fee as described in our Refund Policy. No-shows are non-refundable.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">6. Payments & Refunds</h3>
+            <p>All consultation fees are displayed before booking and are charged at the time of confirmation. Refunds are processed within 5–7 business days in the event of a technical failure or if the doctor fails to attend the consultation. Disputes must be raised within 14 days of the appointment date.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">7. Intellectual Property</h3>
+            <p>All content on this platform — including but not limited to text, graphics, logos, and software — is the exclusive property of Telemedicine Platform and is protected by applicable intellectual property laws. You may not reproduce or distribute any content without prior written consent.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">8. Limitation of Liability</h3>
+            <p>Telemedicine Platform is not liable for any indirect, incidental, or consequential damages arising from your use of the services. Our total liability in any matter shall not exceed the amount paid by you for the specific consultation in question.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">9. Modifications</h3>
+            <p>We reserve the right to update these Terms at any time. Continued use of the platform after changes constitutes acceptance of the revised Terms.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">10. Contact</h3>
+            <p>Questions regarding these Terms may be directed to <span className="text-[#6C5DD3] font-semibold">legal@telemedicine.com</span>.</p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ─── SECURITY MODAL ─── */}
+      <Modal isOpen={showSecurityModal} onClose={() => setShowSecurityModal(false)} title="Security" size="lg">
+        <div className="space-y-6 text-sm text-gray-600 leading-relaxed">
+          <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Last updated: March 1, 2026</p>
+
+          <p>At Telemedicine Platform, the security of your health data is our highest priority. We employ industry-leading security practices to ensure that your personal and medical information remains protected at every layer of our system.</p>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">1. Data Encryption</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>In Transit:</strong> All data transmitted between your browser or app and our servers is encrypted using TLS 1.3 (Transport Layer Security).</li>
+              <li><strong>At Rest:</strong> All stored data, including medical records, consultation notes, and prescriptions, is encrypted using AES-256 encryption.</li>
+              <li><strong>Video Consultations:</strong> All video calls are end-to-end encrypted and are not recorded or stored without explicit patient consent.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">2. Authentication & Access Control</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Multi-factor authentication (MFA) is available and strongly recommended for all accounts.</li>
+              <li>Role-based access control ensures that doctors, patients, and administrators can only access data relevant to their role.</li>
+              <li>Session tokens expire automatically after periods of inactivity.</li>
+              <li>All login attempts and access events are logged for audit purposes.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">3. Infrastructure Security</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Our platform is hosted on enterprise-grade cloud infrastructure with 99.9% uptime SLA.</li>
+              <li>Regular penetration testing is conducted by independent third-party security firms.</li>
+              <li>Automated vulnerability scanning runs continuously on all services.</li>
+              <li>DDoS protection and Web Application Firewall (WAF) are deployed across all endpoints.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">4. HIPAA & Regulatory Compliance</h3>
+            <p>Our platform is fully HIPAA-compliant. We conduct annual HIPAA risk assessments, maintain comprehensive audit trails, and enforce strict workforce training on data handling procedures. All Business Associate Agreements (BAAs) are in place with service providers who process Protected Health Information (PHI).</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">5. Incident Response</h3>
+            <p>We have a dedicated security incident response team available 24/7. In the event of a data breach, affected users will be notified within 72 hours in compliance with applicable regulations. We maintain a detailed incident response plan that is tested quarterly.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">6. Payment Security</h3>
+            <p>We do not store credit card or bank account details on our servers. All payment processing is handled by PCI DSS Level 1 certified payment providers. Transactions are tokenised to prevent any exposure of sensitive financial data.</p>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-gray-900 mb-2">7. Report a Security Issue</h3>
+            <p>If you discover a security vulnerability, please report it responsibly to our security team at <span className="text-[#6C5DD3] font-semibold">security@telemedicine.com</span>. We take all reports seriously and aim to respond within 24 hours.</p>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 };
