@@ -9,7 +9,7 @@ const options = {
       description: 'Complete API documentation for the Telemedicine Platform. This platform connects patients with doctors for online consultations, appointment management, medical report analysis, and prescription generation.',
       contact: {
         name: 'API Support',
-        email: 'support@telemedicine.com'
+        email: 'soonlay.tech@gmail.com'
       },
       license: {
         name: 'ISC',
