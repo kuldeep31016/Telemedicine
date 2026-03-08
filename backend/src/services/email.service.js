@@ -211,7 +211,7 @@ const sendAppointmentEmail = async (data) => {
 
             <div class="footer">
               <p>Thank you for choosing Telemedicine Platform</p>
-              <p>For any queries, contact us at support@Telemedicine.com</p>
+              <p>For any queries, contact us at soonlay.tech@gmail.com</p>
             </div>
           </div>
         </div>
@@ -292,7 +292,7 @@ const sendAppointmentEmail = async (data) => {
 
             <div class="footer">
               <p>Telemedicine Platform</p>
-              <p>For technical support, contact support@Telemedicine.com</p>
+              <p>For technical support, contact soonlay.tech@gmail.com</p>
             </div>
           </div>
         </div>
@@ -390,6 +390,88 @@ const sendAppointmentEmail = async (data) => {
   }
 };
 
+/**
+ * Send contact form message to admin email
+ */
+const sendContactEmail = async ({ name, email, subject, message }) => {
+  try {
+    if (!transporter) {
+      logger.warn('Email transporter not initialized - skipping contact email');
+      return { success: false, message: 'Email not configured' };
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #6C5DD3 0%, #8b5cf6 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+          .details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .detail-row { padding: 12px 0; border-bottom: 1px solid #e0e0e0; }
+          .detail-row:last-child { border-bottom: none; }
+          .label { font-weight: bold; color: #6C5DD3; display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+          .value { color: #333; font-size: 15px; }
+          .message-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #6C5DD3; }
+          .footer { text-align: center; margin-top: 20px; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📬 New Contact Form Message</h1>
+            <p>Someone reached out via the Telemedicine website</p>
+          </div>
+          <div class="content">
+            <div class="details">
+              <div class="detail-row">
+                <span class="label">👤 Name</span>
+                <span class="value">${name}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">📧 Email</span>
+                <span class="value"><a href="mailto:${email}" style="color:#6C5DD3;">${email}</a></span>
+              </div>
+              <div class="detail-row">
+                <span class="label">📝 Subject</span>
+                <span class="value">${subject}</span>
+              </div>
+            </div>
+
+            <div class="message-box">
+              <span class="label">💬 Message</span>
+              <p style="margin-top:8px; white-space: pre-wrap;">${message}</p>
+            </div>
+
+            <div class="footer">
+              <p>Sent from the Contact Us form on Telemedicine Platform</p>
+              <p>Reply directly to this email to respond to ${name}</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await transporter.sendMail({
+      from: `"Telemedicine Platform" <${process.env.SMTP_USER}>`,
+      to: 'iamkuldeepraj06@gmail.com',
+      replyTo: email,
+      subject: `[Contact Form] ${subject} — from ${name}`,
+      html,
+    });
+
+    logger.info(`Contact email sent from ${email}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending contact email:', error);
+    return { success: false, message: error.message };
+  }
+};
+
 module.exports = {
-  sendAppointmentEmail
+  sendAppointmentEmail,
+  sendContactEmail
 };
