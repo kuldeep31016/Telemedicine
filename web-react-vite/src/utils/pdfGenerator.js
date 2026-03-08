@@ -290,7 +290,7 @@ export const generatePaymentReceipt = (appointmentData) => {
     doc.setFontSize(9);
     doc.text('This is a system-generated receipt. No signature required.', margin, yPos);
     yPos += 5;
-    doc.text('Support: support@Telemedicine.com', margin, yPos);
+    doc.text('Support: soonlay.tech@gmail.com', margin, yPos);
 
     // Invoice Number at bottom
     yPos = pageHeight - 20;
