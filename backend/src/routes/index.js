@@ -11,6 +11,7 @@ const videoRoutes = require('./video.routes');
 const chatRoutes = require('./chat.routes');
 const medicalReportRoutes = require('./medicalReport.routes');
 const prescriptionRoutes = require('./prescription.routes');
+const contactRoutes = require('./contact.routes');
 
 // API v1 routes
 router.use('/v1/auth', authRoutes);
@@ -22,6 +23,7 @@ router.use('/v1/video', videoRoutes);
 router.use('/v1/chat', chatRoutes);
 router.use('/v1/medical-reports', medicalReportRoutes);
 router.use('/v1/prescriptions', prescriptionRoutes);
+router.use('/v1/contact', contactRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
