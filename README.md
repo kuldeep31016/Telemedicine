@@ -1,123 +1,90 @@
-# 🏥 Nabha – Telemedicine & HomeCare Platform
+# 🏥 Telemedicine & HomeCare Platform
 
-Nabha is a full-stack **telemedicine and home healthcare platform** designed to simplify access to medical services through digital consultations, patient management, and emergency support.
+Telemedicine is a comprehensive, full-stack **telemedicine and home healthcare platform**. It digitizes and simplifies the healthcare workflow to provide accessible medical services—specifically designed to bridge the gap between patients, healthcare workers, doctors, and administrators. 
 
-The platform connects **patients, healthcare workers, doctors, and administrators** into a single system, enabling efficient remote care and streamlined healthcare workflows.
-
----
-
-## ✨ Overview
-
-Nabha focuses on solving common healthcare accessibility problems by providing:
-
-- Remote doctor consultations
-- Digital patient records and prescriptions
-- Emergency SOS support
-- Mobile tools for healthcare workers
-- Web dashboards for doctors and administrators
-
-The project is built as a **scalable and modular system**, suitable for real-world usage, learning, and future expansion.
+By offering remote consultations, digital record management, and an integrated emergency support system, Telemedicine enables efficient remote care and streamlines the entire healthcare lifecycle.
 
 ---
 
-## 🎯 Project Goals
+## 🌟 Key Features
 
-- Improve access to healthcare through digital platforms
-- Reduce dependency on physical hospital visits
-- Simplify patient data and medical record management
-- Enable faster response during medical emergencies
-- Provide doctors with an organized digital workflow
+- **Remote Doctor Consultations:** Seamless video and voice consultations without physical hospital visits.
+- **Digital Patient Records & Prescriptions:** Secure management of patient medical histories, documents, and digital prescriptions.
+- **Emergency SOS Support:** A one-tap emergency alert system with location sharing and immediate notifications.
+- **Role-Based Access:** Dedicated interfaces for Patients, Healthcare Workers (Field Staff), Doctors, and Administrators to handle their specific workflows optimally.
+- **Real-Time Communication:** Instant messaging and real-time updates seamlessly integrated into the platform.
 
 ---
 
 ## 👥 User Roles
 
 ### 👤 Patients
-- Register and manage personal health profiles
-- Book online consultations
-- View prescriptions and medical history
-- Use emergency SOS during critical situations
+- Register and maintain personal health profiles.
+- Book online medical consultations easily.
+- Access prescriptions and medical history.
+- Request immediate assistance using the emergency SOS feature.
 
-### 👩‍⚕️ Healthcare Workers (ASHA / Field Staff)
-- Register patients in the field
-- Collect basic health information
-- Assist patients during consultations
-- Manage follow-ups and referrals
+### 👩‍⚕️ Healthcare Workers
+- Assist in registering patients directly from the field.
+- Collect basic health information and vitals.
+- Aid patients in connecting to their specialized remote consultations.
+- Manage follow-ups and specialist referrals.
 
 ### 👨‍⚕️ Doctors
-- Manage appointments and patient queues
-- Conduct video or voice consultations
-- Access complete patient medical history
-- Create digital prescriptions and treatment notes
+- Manage daily schedules, appointment queues, and patient follow-ups.
+- Conduct live video/voice consultations.
+- Access a complete, unified view of the patient's medical history.
+- Generate and issue digital prescriptions and secure treatment notes.
 
-### 🛠️ Admin
-- Manage users and roles
-- Monitor platform activity
-- View analytics and usage insights
-- Maintain system configuration
-
----
-
-## 🧱 System Architecture
-
-Mobile App (React Native)
-|
-Web Dashboards (Doctor / Admin)
-|
-Backend API (Node.js + Express)
-|
-MongoDB Database
+### 🛠️ Administrators
+- Handle user approvals, role assignments, and access control.
+- Monitor overall platform activity and performance.
+- Access analytics, usage insights, and system configurations.
 
 ---
 
-## 🧩 Technology Stack
+## 💻 Tech Stack
 
-### Frontend
-- React Native (Mobile Application)
-- Web dashboards for Doctor & Admin
-- Responsive, role-based UI
-
-### Backend
-- Node.js + Express.js
-- MongoDB
-- REST APIs
-- JWT-based authentication
-- Role-based access control
-- Socket.IO for real-time communication
-
-### Additional Services
-- File uploads for medical documents
-- SMS / Email notifications
-- Secure password handling
-- API documentation using Swagger
+- **Frontend:** React.js, Vite, Tailwind CSS, Material UI (Responsive and dynamic user interface).
+- **Backend:** Node.js, Express.js (RESTful APIs).
+- **Database:** MongoDB (Scalable NoSQL data management).
+- **Communication:** Socket.IO, WebRTC/Agora (Real-time video/audio and chat).
+- **Services:** JWT Authentication, Firebase, Cloud Storage.
 
 ---
 
-## 🚨 Emergency SOS Feature
+## 🚀 How to Start the Project
 
-- One-tap emergency alert from the mobile app
-- GPS-based location sharing
-- Notifications to registered emergency contacts
-- Designed for quick response during critical situations
+### 1. Backend Setup
 
+The backend handles all business logic, database connections, and real-time socket communications.
 
-## ⚙️ Installation & Setup
+```bash
+# Navigate to the backend directory
+cd backend
 
-### Prerequisites
-- Node.js (>=16)
-- MongoDB
-- Git
-- Android Studio / Xcode (for mobile development)
+# Install dependencies
+npm install
+
+# Start the backend server
+npm start
+```
+
+### 2. Frontend Setup
+
+The frontend provides the interactive web dashboard for doctors, admins, and other users.
+
+```bash
+# Navigate to the frontend directory
+cd web-react-vite
+
+# Install dependencies
+npm install
+
+# Start the frontend development server
+npm run dev
+```
 
 ---
 
-👤 Author
-
-Kuldeep Raj
-Full-Stack Developer
-Focus: React Native, Node.js, Backend Systems
-
-📄 License
-
-This project is intended for learning and development purposes.
-You are free to modify and extend it.
+*This platform is built as a robust, scalable system designed to improve healthcare accessibility and optimize medical workflows.*
